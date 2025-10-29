@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 
 class Loginpage extends StatefulWidget {
   const Loginpage({super.key});
@@ -13,25 +14,22 @@ class _LoginpageState extends State<Loginpage> {
 
   @override
   Widget build(BuildContext context) {
-
-    return  Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 50),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/images/sekolah.png', height: 113,),
-            SizedBox(height: 40,),
-            const Align(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/images/sekolah.png', height: 113),
+                SizedBox(height: 40),
+                const Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Log In',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -54,7 +52,7 @@ class _LoginpageState extends State<Loginpage> {
                   obscuringCharacter: '*',
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    
+
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -87,13 +85,17 @@ class _LoginpageState extends State<Loginpage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const MyHomePage(title: 'CBT App'),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Login',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ),
@@ -105,5 +107,3 @@ class _LoginpageState extends State<Loginpage> {
     );
   }
 }
-
-
