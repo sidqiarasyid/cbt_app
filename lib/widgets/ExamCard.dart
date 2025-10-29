@@ -8,6 +8,7 @@ class ExamCard extends StatelessWidget {
   final String teacher;
   final String grade;
   final String imageUrl;
+  final VoidCallback onBtnPressed;
 
   const ExamCard({
     super.key,
@@ -17,6 +18,7 @@ class ExamCard extends StatelessWidget {
     required this.teacher,
     required this.grade,
     required this.imageUrl,
+    required this.onBtnPressed
   });
 
   @override
@@ -45,10 +47,10 @@ class ExamCard extends StatelessWidget {
                   topRight: Radius.circular(12),
                 ),
                 child: Container(
-                  height: 200,
+                  height: 150,
                   width: double.infinity,
                   decoration: BoxDecoration(color: Colors.grey[300]),
-                  child: Image.network(
+                  child: Image.asset(
                     imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
@@ -98,6 +100,7 @@ class ExamCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
@@ -144,11 +147,11 @@ class ExamCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Teacher Info
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.only(left: 16, right: 16),
             child: Row(
               children: [
                 CircleAvatar(
@@ -171,17 +174,15 @@ class ExamCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 15),
 
           // Action Button
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to exam details or start exam
-                },
+                onPressed: onBtnPressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.cyan[400],
                   foregroundColor: Colors.white,

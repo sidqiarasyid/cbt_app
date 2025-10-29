@@ -1,3 +1,4 @@
+import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 import '../main.dart';
 
@@ -23,7 +24,7 @@ class _LoginpageState extends State<Loginpage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/images/sekolah.png', height: 113),
+                Image.asset('assets/images/sekolah.png', height: 113,),
                 SizedBox(height: 40),
                 const Align(
                   alignment: Alignment.centerLeft,
@@ -78,14 +79,14 @@ class _LoginpageState extends State<Loginpage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00AEEF),
+                      backgroundColor: ColorsApp.primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
