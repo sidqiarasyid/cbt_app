@@ -1,4 +1,4 @@
-import 'package:cbt_app/pages/LoginPage.dart';
+import 'package:cbt_app/pages/login_page.dart';
 import 'package:flutter/material.dart';
 
 // Import widgets
