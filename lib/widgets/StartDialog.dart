@@ -1,35 +1,28 @@
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
-class QuizStartPage extends StatelessWidget {
-  const QuizStartPage({super.key});
+class StartDialog extends StatelessWidget {
+  const StartDialog({super.key, required this.subject, required this.btnPressed});
+  final VoidCallback btnPressed;
+  final String subject;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      
-      body: Center(
-        child: Container(
-          height: 230,
-          width: 410,
-          margin: EdgeInsets.all(16),
+    return Dialog(  
+      backgroundColor: Colors.transparent,
+      elevation: 0.0, 
+      child:  Container(
+          height: MediaQuery.of(context).size.height * 0.3,
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color:ColorsApp.secondaryColor,
+            color: ColorsApp.secondaryColor,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-               color: Colors.grey.withValues(alpha: 0.5),
-               spreadRadius: 2,
-               blurRadius: 2,
-               offset: Offset(0, 3), // changes position of shadow
-        ),
-            ]
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("UAS - Bahasa Inggris", style: TextStyle(
-                fontSize: 20,
+              Text(subject, textAlign: TextAlign.center, style:  TextStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.bold
               ),),
               SizedBox(height: 5,),
@@ -41,16 +34,13 @@ class QuizStartPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorsApp.primaryColor
                   ),
-                  onPressed: (){
-                      
-                  }, 
+                  onPressed: btnPressed,
                   child: Text("Mulai Ujian", style: TextStyle(color: Colors.white, ),)
                   ),
               )
             ],
           ),
         ),
-      ),
     );
   }
 }

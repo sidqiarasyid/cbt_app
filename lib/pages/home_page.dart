@@ -1,5 +1,5 @@
 import 'package:cbt_app/model/UjianModel.dart';
-import 'package:cbt_app/pages/quiz_start_page.dart';
+import 'package:cbt_app/widgets/StartDialog.dart';
 import 'package:flutter/material.dart';
 import '../widgets/ExamCard.dart';
 
@@ -94,9 +94,7 @@ class HomePage extends StatelessWidget {
                           grade: ujianList[index].grade,
                           imageUrl: ujianList[index].ujianImage,
                           onBtnPressed: () {
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => QuizStartPage(),
-                              ));
+                            startQuiz(context, ujianList[index].subject, (){});
                           },
                     ),
                   );
@@ -110,5 +108,13 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
+
+    
   }
+}
+
+startQuiz(BuildContext context, String sub, VoidCallback btnPressed){
+  showDialog(context: context, builder: (BuildContext context) {
+    return StartDialog(subject: sub, btnPressed: btnPressed);
+  },);
 }
