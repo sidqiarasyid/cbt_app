@@ -1,15 +1,104 @@
+import 'package:cbt_app/model/UjianModel.dart';
+import 'package:cbt_app/pages/quiz_pilgan_page.dart';
+import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
 class QuizPage extends StatefulWidget {
-  const QuizPage({super.key});
+  final UjianModel ujian;
+  const QuizPage({super.key, required this.ujian});
 
   @override
   State<QuizPage> createState() => _QuizPageState();
 }
 
 class _QuizPageState extends State<QuizPage> {
+  late String ques;
+  late int rAnswer;
+  late List<String> answer;
+  int currentQuestion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    ques = widget.ujian.quizList[currentQuestion].question;
+    rAnswer = widget.ujian.quizList[currentQuestion].rightAnswer;
+    answer = widget.ujian.quizList[currentQuestion].answers;
+  }
+  
+  void nextQuestion(){
+    setState(() {
+      currentQuestion++;
+      ques = widget.ujian.quizList[currentQuestion].question;
+      rAnswer = widget.ujian.quizList[currentQuestion].rightAnswer;
+      answer = widget.ujian.quizList[currentQuestion].answers;
+    });
+  }
+  
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(onPressed: (){
+                        Navigator.pop(context);
+                      }, 
+                      icon: Icon(Icons.arrow_back), iconSize: 30,),
+                      Text("Soal ${currentQuestion + 1}", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 80,
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            width: 1,
+                            color: Colors.black
+                          )
+                        ),
+                        child: Text("40:00", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
+                      ),
+                      IconButton(onPressed: (){
+
+                      }, 
+                      icon: Icon(Icons.grid_view_outlined, size: 30,))
+                    ],
+                  )
+                ],
+              ),
+            ),
+            QuizPilganPage(question: ques, rightAnswer: rAnswer, answerList: answer,),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadiusGeometry.circular(8)
+                  ),
+                  backgroundColor: ColorsApp.primaryColor
+                ),
+                onPressed: nextQuestion, 
+                child: Text("Selanjutnya", style: TextStyle(color: ColorsApp.secondaryColor),)),
+            )
+          ],
+        ),
+      ),
+    );
   }
 }

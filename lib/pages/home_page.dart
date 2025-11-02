@@ -1,4 +1,6 @@
+import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
+import 'package:cbt_app/pages/quiz_page.dart';
 import 'package:cbt_app/widgets/StartDialog.dart';
 import 'package:flutter/material.dart';
 import '../widgets/ExamCard.dart';
@@ -8,7 +10,27 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+    List<String> jawaban1 = [
+      "Answer 1", 
+      "Answer 2",
+      "Answer 3",
+      "Answer 4"
+    ];
+    List<QuizModel> quizList1 = [
+      QuizModel(question: "Choose the correct sentence!, there is more than one answers to this question", 
+      quizType: "Pilgan", 
+      answers: jawaban1, 
+      rightAnswer: 1
+      ),
+       QuizModel(question: "Theres 4 Answers, there is more than one answers to this question 2", 
+      quizType: "Pilgan", 
+      answers: jawaban1, 
+      rightAnswer: 2),
+       QuizModel(question: "This problem need you to choose from 4 answers, there is more than one answers to this question 3", 
+      quizType: "Pilgan", 
+      answers: jawaban1, 
+      rightAnswer: 3),
+    ];
     List<UjianModel> ujianList = [
       UjianModel(
         subject: "Bahasa Inggris-Listening & Reading", 
@@ -16,21 +38,25 @@ class HomePage extends StatelessWidget {
         date: "31 Mar 2024", 
         teacher: "Pak Budi", 
         type: "UTS", 
-        ujianImage: 'assets/images/c1.jpg'),
+        ujianImage: 'assets/images/c1.jpg',
+        quizList: quizList1),
       UjianModel(
         subject: "Bahasa Indonesia-Advanced", 
         grade: "X IPS B", 
         date: "1 April 2024", 
         teacher: "Bu Maryam", 
         type: "UTS", 
-        ujianImage: 'assets/images/c2.jpg'),
+        ujianImage: 'assets/images/c2.jpg',
+        quizList: quizList1
+        ),
       UjianModel(
         subject: "Matematika Lanjutan (Susah)", 
         grade: "X IPS B", 
         date: "3 April 2024", 
         teacher: "Bu Rini", 
         type: "UTS", 
-        ujianImage: 'assets/images/c1.jpg'),
+        ujianImage: 'assets/images/c1.jpg',
+        quizList: quizList1),
     ];
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -94,7 +120,11 @@ class HomePage extends StatelessWidget {
                           grade: ujianList[index].grade,
                           imageUrl: ujianList[index].ujianImage,
                           onBtnPressed: () {
-                            startQuiz(context, ujianList[index].subject, (){});
+                            startQuiz(context, ujianList[index].subject, (){
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (context) => QuizPage(ujian: ujianList[index],)));
+                            });
                           },
                     ),
                   );

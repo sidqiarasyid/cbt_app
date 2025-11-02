@@ -8,7 +8,7 @@ class UjianModel {
   String type;
   String ujianImage;
   String? teacherImage;
-  List<QuizModel>? quizList;
+  List<QuizModel> quizList;
 
   UjianModel({
     required this.subject,
@@ -16,7 +16,8 @@ class UjianModel {
     required this.date,
     required this.teacher,
     required this.type,
-    required this.ujianImage
+    required this.ujianImage,
+    required this.quizList
   }
   );
 }
