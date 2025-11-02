@@ -1,5 +1,6 @@
 
 import 'package:cbt_app/style/style.dart';
+import 'package:cbt_app/widgets/AnswerBtn.dart';
 import 'package:flutter/material.dart';
 
 class QuizPilganPage extends StatefulWidget {
@@ -42,49 +43,19 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Color(0xffECEFF5)
+                  AnswerBtn(
+                    content: widget.answerList[0], 
                     ),
-                    child: Text(widget.answerList[0], 
-                    style: TextStyle(fontWeight: FontWeight.w500),),
-                  ),
-                    Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Color(0xffECEFF5)
-                  ),
-                  child: Text(widget.answerList[1], 
-                  style: TextStyle(fontWeight: FontWeight.w500),),
-                ),
-                
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Color(0xffECEFF5)
-                  ),
-                  child: Text(widget.answerList[2], 
-                  style: TextStyle(fontWeight: FontWeight.w500),),
-                ),
-                
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Color(0xffECEFF5)
-                  ),
-                  child: Text(widget.answerList[3], 
-                  style: TextStyle(fontWeight: FontWeight.w500),),
-                ),
-              
+                  AnswerBtn(
+                    content: widget.answerList[1], 
+                    ),
+                  AnswerBtn(
+                    content: widget.answerList[2], 
+                    ),
+                  AnswerBtn(
+                    content: widget.answerList[3], 
+                    ),      
+                    
                 ],
               ),
             ),
