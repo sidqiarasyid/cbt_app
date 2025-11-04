@@ -1,4 +1,7 @@
+import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
+import 'package:cbt_app/pages/quiz_end_page.dart';
+import 'package:cbt_app/pages/quiz_picker.dart';
 import 'package:cbt_app/pages/quiz_pilgan_page.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
@@ -20,17 +23,26 @@ class _QuizPageState extends State<QuizPage> {
   @override
   void initState() {
     super.initState();
-    ques = widget.ujian.quizList[currentQuestion].question;
-    rAnswer = widget.ujian.quizList[currentQuestion].rightAnswer;
-    answer = widget.ujian.quizList[currentQuestion].answers;
+    List<QuizModel> qList = widget.ujian.quizList;
+    ques = qList[currentQuestion].question;
+    rAnswer = qList[currentQuestion].rightAnswer;
+    answer = qList[currentQuestion].answers;
   }
   
   void nextQuestion(){
+    List<QuizModel> qList = widget.ujian.quizList;
     setState(() {
-      currentQuestion++;
-      ques = widget.ujian.quizList[currentQuestion].question;
-      rAnswer = widget.ujian.quizList[currentQuestion].rightAnswer;
-      answer = widget.ujian.quizList[currentQuestion].answers;
+      if(currentQuestion + 1 == qList.length){
+        Navigator.push(context, 
+          MaterialPageRoute(builder: (context) => QuizEndPage()
+          )
+        );
+      } else {
+        currentQuestion++;
+      }
+       ques = qList[currentQuestion].question;
+       rAnswer = qList[currentQuestion].rightAnswer;
+       answer = qList[currentQuestion].answers;
     });
   }
   
@@ -72,7 +84,8 @@ class _QuizPageState extends State<QuizPage> {
                         child: Text("40:00", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
                       ),
                       IconButton(onPressed: (){
-
+                        Navigator.push(context, 
+                        MaterialPageRoute(builder: (context) => QuizPicker()));
                       }, 
                       icon: Icon(Icons.grid_view_outlined, size: 30,))
                     ],
@@ -87,7 +100,6 @@ class _QuizPageState extends State<QuizPage> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadiusGeometry.circular(8)
                   ),
