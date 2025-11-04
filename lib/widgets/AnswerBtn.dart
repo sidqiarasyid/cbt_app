@@ -22,11 +22,11 @@ class _AnswerBtnState extends State<AnswerBtn> {
         bgColor = Color(0xffF3FBFE);
         txtColor = ColorsApp.primaryColor;
         borderColor = ColorsApp.primaryColor;
-    } else {
-      bgColor = Color(0xffECEFF5);
-      borderColor = Color(0xffECEFF5);
-      txtColor = Colors.black;
-    }
+       } else {
+        bgColor = Color(0xffECEFF5);
+        borderColor = Color(0xffECEFF5);
+        txtColor = Colors.black;
+       }
     });
   }
 

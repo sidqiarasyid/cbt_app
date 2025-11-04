@@ -53,7 +53,6 @@ class _LoginpageState extends State<Loginpage> {
                   obscuringCharacter: '*',
                   decoration: InputDecoration(
                     hintText: 'Password',
-
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
