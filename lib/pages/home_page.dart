@@ -20,16 +20,33 @@ class HomePage extends StatelessWidget {
       QuizModel(question: "Choose the correct sentence!, there is more than one answers to this question", 
       quizType: "Pilgan", 
       answers: jawaban1, 
-      rightAnswer: 1
+      rightAnswer: 1,
+      isFinished: false
       ),
        QuizModel(question: "Theres 4 Answers, there is more than one answers to this question 2", 
       quizType: "Pilgan", 
       answers: jawaban1, 
-      rightAnswer: 2),
+      rightAnswer: 2,
+      isFinished: false
+      ),
        QuizModel(question: "This problem need you to choose from 4 answers, there is more than one answers to this question 3", 
       quizType: "Pilgan", 
       answers: jawaban1, 
-      rightAnswer: 3),
+      rightAnswer: 3,
+      isFinished: false
+      ),
+      QuizModel(question: "Requires you to choose one of the 4 answers, but there is always more than one answer to a problem 4", 
+      quizType: "Pilgan", 
+      answers: jawaban1, 
+      rightAnswer: 3,
+      isFinished: false
+      ),
+      QuizModel(question: "This question does not accept zero answer, it needs at least 1 or more answer to be picked in order for it to pass you 5", 
+      quizType: "Pilgan", 
+      answers: jawaban1, 
+      rightAnswer: 3,
+      isFinished: false
+      ),
     ];
     List<UjianModel> ujianList = [
       UjianModel(

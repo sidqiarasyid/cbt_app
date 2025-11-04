@@ -4,6 +4,7 @@ import 'package:cbt_app/pages/quiz_end_page.dart';
 import 'package:cbt_app/pages/quiz_picker.dart';
 import 'package:cbt_app/pages/quiz_pilgan_page.dart';
 import 'package:cbt_app/style/style.dart';
+import 'package:cbt_app/widgets/EndQuizDialog.dart';
 import 'package:flutter/material.dart';
 
 class QuizPage extends StatefulWidget {
@@ -23,7 +24,11 @@ class _QuizPageState extends State<QuizPage> {
   @override
   void initState() {
     super.initState();
-    List<QuizModel> qList = widget.ujian.quizList;
+    loadCurrentQuestion();
+  }
+
+  void loadCurrentQuestion() {
+    final qList = widget.ujian.quizList;
     ques = qList[currentQuestion].question;
     rAnswer = qList[currentQuestion].rightAnswer;
     answer = qList[currentQuestion].answers;
@@ -31,20 +36,34 @@ class _QuizPageState extends State<QuizPage> {
   
   void nextQuestion(){
     List<QuizModel> qList = widget.ujian.quizList;
-    setState(() {
-      if(currentQuestion + 1 == qList.length){
+    qList[currentQuestion].isFinished = true;
+    if(currentQuestion + 1 >= qList.length){
         Navigator.push(context, 
           MaterialPageRoute(builder: (context) => QuizEndPage()
           )
         );
-      } else {
-        currentQuestion++;
-      }
-       ques = qList[currentQuestion].question;
-       rAnswer = qList[currentQuestion].rightAnswer;
-       answer = qList[currentQuestion].answers;
-    });
+    } else {
+      currentQuestion++;
+      setState(() {
+        loadCurrentQuestion();
+      });
+    }
+    
   }
+
+  Future<void> navigatePicker(BuildContext context, List<QuizModel> qList, int curItem) async{
+  int? res;
+  res = await Navigator.push(
+    context, 
+    MaterialPageRoute(builder: (context) => QuizPicker(quizList: qList, currItem: curItem,)));
+   
+   if(!context.mounted) return;
+   res ??= curItem;
+   setState(() {
+     currentQuestion = res!;
+     loadCurrentQuestion();
+   });
+  } 
   
 
   @override
@@ -61,10 +80,21 @@ class _QuizPageState extends State<QuizPage> {
                 children: [
                   Row(
                     children: [
-                      IconButton(onPressed: (){
-                        Navigator.pop(context);
-                      }, 
-                      icon: Icon(Icons.arrow_back), iconSize: 30,),
+                      IconButton(
+                        onPressed: () {
+                          endQuiz(context, 
+                            (){
+                              Navigator.pop(context);
+                              Navigator.pop(context);
+                            }, 
+                            (){
+                              Navigator.pop(context);
+                            }
+                          );
+                        }, 
+                        icon: Icon(Icons.arrow_back),
+                        iconSize: 30,
+                      ),
                       Text("Soal ${currentQuestion + 1}", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
                     ],
                   ),
@@ -84,8 +114,7 @@ class _QuizPageState extends State<QuizPage> {
                         child: Text("40:00", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
                       ),
                       IconButton(onPressed: (){
-                        Navigator.push(context, 
-                        MaterialPageRoute(builder: (context) => QuizPicker()));
+                        navigatePicker(context, widget.ujian.quizList, currentQuestion);
                       }, 
                       icon: Icon(Icons.grid_view_outlined, size: 30,))
                     ],
@@ -100,6 +129,7 @@ class _QuizPageState extends State<QuizPage> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
+                  
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadiusGeometry.circular(8)
                   ),
@@ -114,3 +144,11 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 }
+
+endQuiz(BuildContext context, VoidCallback yes, VoidCallback no){
+  showDialog(context: context, builder: (context) {
+    return EndQuizDialog(onYesPressed: yes, onNoPressed: no);
+  },
+  );
+}
+
