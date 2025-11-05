@@ -5,12 +5,10 @@ import 'package:flutter/material.dart';
 
 class QuizPilganPage extends StatefulWidget {
   final String question;
-  final int rightAnswer;
   final List<String> answerList;
   const QuizPilganPage({
     super.key,
     required this.question, 
-    required this.rightAnswer, 
     required this.answerList
     });
 
