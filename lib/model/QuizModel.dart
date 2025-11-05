@@ -1,16 +1,19 @@
 class QuizModel {
   String question;
   String quizType;
-  List<String> answers;
-  int rightAnswer;
-  String? image; 
   bool isFinished;
+  List<String>? answersPilgan;
+  int? rightAnswerPilgan;
+  String? answerEssay;
+  String? image; 
 
   QuizModel({
     required this.question,
-    required this.quizType, 
-    required this.answers, 
-    required this.rightAnswer,
-    required this.isFinished
+    required this.quizType,
+    required this.isFinished, 
+    this.rightAnswerPilgan,
+    this.answersPilgan,
+    this.image,
+    this.answerEssay
   });
 }
