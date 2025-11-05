@@ -1,6 +1,7 @@
 import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
 import 'package:cbt_app/pages/quiz_end_page.dart';
+import 'package:cbt_app/pages/quiz_essay_page.dart';
 import 'package:cbt_app/pages/quiz_picker.dart';
 import 'package:cbt_app/pages/quiz_pilgan_page.dart';
 import 'package:cbt_app/style/style.dart';
@@ -17,10 +18,9 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
   late String ques;
-  late int rAnswer;
   late List<String> answer;
   int currentQuestion = 0;
-
+  TextEditingController essayController = new TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -30,8 +30,7 @@ class _QuizPageState extends State<QuizPage> {
   void loadCurrentQuestion() {
     final qList = widget.ujian.quizList;
     ques = qList[currentQuestion].question;
-    rAnswer = qList[currentQuestion].rightAnswer;
-    answer = qList[currentQuestion].answers;
+    answer = qList[currentQuestion].answersPilgan!;
   }
 
   void nextQuestion() {
@@ -148,11 +147,9 @@ class _QuizPageState extends State<QuizPage> {
                 ],
               ),
             ),
-            QuizPilganPage(
-              question: ques,
-              rightAnswer: rAnswer,
-              answerList: answer,
-            ),
+            (widget.ujian.quizList[currentQuestion].quizType == "Essay") ?
+            QuizEssayPage(question: ques, controller: essayController,) : 
+            QuizPilganPage(question: ques, answerList: answer,),
             Container(
               margin: EdgeInsets.symmetric(horizontal: 22, vertical: 10),
               width: double.infinity,

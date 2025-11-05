@@ -17,34 +17,35 @@ class HomePage extends StatelessWidget {
       "Answer 4"
     ];
     List<QuizModel> quizList1 = [
-      QuizModel(question: "Choose the correct sentence!, there is more than one answers to this question", 
+      QuizModel(
+      question: "Choose the correct sentence!, there is more than one answers to this question", 
       quizType: "Pilgan", 
-      answers: jawaban1, 
-      rightAnswer: 1,
+      answersPilgan: jawaban1, 
+      rightAnswerPilgan: 1,
       isFinished: false
       ),
-       QuizModel(question: "Theres 4 Answers, there is more than one answers to this question 2", 
-      quizType: "Pilgan", 
-      answers: jawaban1, 
-      rightAnswer: 2,
-      isFinished: false
+       QuizModel(
+      question: "This is an essay problem, you need to write up to 200 words in this quiz", 
+      quizType: "Essay",  
+      isFinished: false,
+      answersPilgan: []
       ),
        QuizModel(question: "This problem need you to choose from 4 answers, there is more than one answers to this question 3", 
       quizType: "Pilgan", 
-      answers: jawaban1, 
-      rightAnswer: 3,
+      answersPilgan: jawaban1, 
+      rightAnswerPilgan: 3,
       isFinished: false
       ),
       QuizModel(question: "Requires you to choose one of the 4 answers, but there is always more than one answer to a problem 4", 
       quizType: "Pilgan", 
-      answers: jawaban1, 
-      rightAnswer: 3,
+      answersPilgan: jawaban1, 
+      rightAnswerPilgan: 3,
       isFinished: false
       ),
       QuizModel(question: "This question does not accept zero answer, it needs at least 1 or more answer to be picked in order for it to pass you 5", 
       quizType: "Pilgan", 
-      answers: jawaban1, 
-      rightAnswer: 3,
+      answersPilgan: jawaban1, 
+      rightAnswerPilgan: 3,
       isFinished: false
       ),
     ];
