@@ -149,7 +149,7 @@ class _QuizPageState extends State<QuizPage> {
             ),
             (widget.ujian.quizList[currentQuestion].quizType == "Essay") ?
             QuizEssayPage(question: ques, controller: essayController,) : 
-            QuizPilganPage(question: ques, answerList: answer,),
+            QuizPilganPage(question: ques, answerList: answer,),  
             Container(
               margin: EdgeInsets.symmetric(horizontal: 22, vertical: 10),
               width: double.infinity,
