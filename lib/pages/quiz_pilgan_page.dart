@@ -1,6 +1,6 @@
 
 import 'package:cbt_app/style/style.dart';
-import 'package:cbt_app/widgets/AnswerBtn.dart';
+
 import 'package:flutter/material.dart';
 
 class QuizPilganPage extends StatefulWidget {
@@ -17,7 +17,43 @@ class QuizPilganPage extends StatefulWidget {
 }
 
 class _QuizPilganPageState extends State<QuizPilganPage> {
- 
+  int? activeButton;
+
+  void toggleButton(int index){
+    setState(() {
+      if(activeButton == index){
+        activeButton = null;
+      } else{
+        activeButton = index;
+      }
+    });
+  }
+
+  Widget buildButton(int index, String cont){
+    final bool isActive = activeButton == index;
+    final bool isDisabled = activeButton != null && !isActive;
+    final VoidCallback? onTap = isDisabled ? null : ()=> toggleButton(index);
+    return GestureDetector(
+
+      onTap: onTap,
+      child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border.all(color:  isActive ? ColorsApp.primaryColor : Color(0xffECEFF5)),
+                  borderRadius: BorderRadius.circular(10),
+                  color: isActive ? Color(0xffF3FBFE) : Color(0xffECEFF5)
+                ),
+                child: Text(cont, 
+                style: TextStyle(fontWeight: FontWeight.w500, color:  isActive ? ColorsApp.primaryColor : Colors.black),),
+              )
+    );
+  }
+  
+
+
+
+  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -41,19 +77,10 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  AnswerBtn(
-                    content: widget.answerList[0], 
-                    ),
-                  AnswerBtn(
-                    content: widget.answerList[1], 
-                    ),
-                  AnswerBtn(
-                    content: widget.answerList[2], 
-                    ),
-                  AnswerBtn(
-                    content: widget.answerList[3], 
-                    ),      
-                    
+                  buildButton(1, widget.answerList[0]),
+                  buildButton(2, widget.answerList[1]),
+                  buildButton(3, widget.answerList[2]),
+                  buildButton(4, widget.answerList[3]),     
                 ],
               ),
             ),
