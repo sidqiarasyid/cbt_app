@@ -89,7 +89,7 @@ class _LoginpageState extends State<Loginpage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              const MyHomePage(title: 'CBT App'),
+                              const MyHomePage(),
                         ),
                       );
                     },
