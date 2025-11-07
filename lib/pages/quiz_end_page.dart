@@ -1,6 +1,7 @@
+import 'package:cbt_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:cbt_app/style/style.dart';
-import 'package:cbt_app/pages/home_page.dart';
+
 import 'package:cbt_app/model/UjianModel.dart';
 
 class QuizEndPage extends StatelessWidget {
@@ -32,13 +33,7 @@ class QuizEndPage extends StatelessWidget {
     final now = submittedAt ?? DateTime.now();
     final title = '${ujian.type} - ${ujian.subject}';
 
-    // Snackbar info sekali saat halaman tampil
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ujian berhasil dikirim')),
-      );
-    });
-
+    
     return Scaffold(
       backgroundColor: ColorsApp.secondaryColor,
       appBar: AppBar(
@@ -87,7 +82,7 @@ class QuizEndPage extends StatelessWidget {
                 ),
                 onPressed: () {
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const HomePage()),
+                    MaterialPageRoute(builder: (_) => MyHomePage()),
                     (route) => false,
                   );
                 },
