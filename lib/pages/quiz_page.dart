@@ -1,5 +1,6 @@
 import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
+import 'package:cbt_app/pages/quiz_blocked_page.dart';
 import 'package:cbt_app/pages/quiz_end_page.dart';
 import 'package:cbt_app/pages/quiz_essay_page.dart';
 import 'package:cbt_app/pages/quiz_picker.dart';
@@ -37,12 +38,19 @@ class _QuizPageState extends State<QuizPage> {
     List<QuizModel> qList = widget.ujian.quizList;
     qList[currentQuestion].isFinished = true;
     if (currentQuestion + 1 >= qList.length) {
-      Navigator.push(
+      endQuiz(context, 
+      (){
+        Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => QuizEndPage(ujian: widget.ujian),
         ),
       );
+      }, 
+      (){
+        Navigator.pop(context);
+      });
+      
     } else {
       currentQuestion++;
       setState(() {
@@ -109,6 +117,9 @@ class _QuizPageState extends State<QuizPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      IconButton(onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => QuizBlockedPage(),));
+                      }, icon: Icon(Icons.cancel,), iconSize: 30,)
                     ],
                   ),
                   Row(

@@ -1,37 +1,17 @@
 import 'package:cbt_app/main.dart';
-import 'package:flutter/material.dart';
 import 'package:cbt_app/style/style.dart';
+import 'package:flutter/material.dart';
 
-import 'package:cbt_app/model/UjianModel.dart';
-
-class QuizEndPage extends StatelessWidget {
-  final UjianModel ujian;
-  final DateTime? submittedAt; 
-
-  const QuizEndPage({
-    super.key,
-    required this.ujian,
-    this.submittedAt,
-  });
-
-
-  String _formatIndo(DateTime dt) {
-    const hari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
-    const bulan = [
-      'Januari','Februari','Maret','April','Mei','Juni',
-      'Juli','Agustus','September','Oktober','November','Desember'
-    ];
-    final namaHari = hari[(dt.weekday - 1) % 7];
-    final namaBulan = bulan[dt.month - 1];
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final mm = dt.minute.toString().padLeft(2, '0');
-    return '$namaHari, ${dt.day} $namaBulan ${dt.year}, $hh:$mm';
-  }
+class QuizBlockedPage extends StatefulWidget {
+  const QuizBlockedPage({super.key});
 
   @override
+  State<QuizBlockedPage> createState() => _QuizBlockedPageState();
+}
+
+class _QuizBlockedPageState extends State<QuizBlockedPage> {
+  @override
   Widget build(BuildContext context) {
-    final now = submittedAt ?? DateTime.now();
-    final title = '${ujian.type} - ${ujian.subject}';
     return Scaffold(
       backgroundColor: ColorsApp.secondaryColor,
       body: SafeArea(
@@ -40,30 +20,44 @@ class QuizEndPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 320,
-                child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 22), textAlign: TextAlign.center,)),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
               Center(
                 child: Container(
                   width: 220,
                   height: 220,
                   decoration: const BoxDecoration(
-                    color: ColorsApp.primaryColor,
+                    color: Color(0xffFF6B6B),
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Icon(Icons.check, color: Colors.white, size: 120),
+                    child: Icon(Icons.close, color: Colors.white, size: 120),
                   ),
                 ),
               ),
               const SizedBox(height: 28),
               Text(
-                'Ujian disubmit pada ${_formatIndo(now)}',
+                'Anda melakukan pelanggaran di ujian pada 8 September 2024, 12:37',
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 16),
               ),
-              const Spacer(),
+              SizedBox(height: 10,),
+              Text(
+                'Konsultasi  ke guru pengawas atau Admin untuk mendapatkan kode ujian untuk membuka block',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
+              SizedBox(height: 20,),
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Kode ujian',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    filled: true,
+                    fillColor: ColorsApp.secondaryColor,
+                ),
+              ),
+              SizedBox(height: 20,),
               SizedBox(
                 width: double.infinity,
                 height: 52,
