@@ -34,64 +34,62 @@ class QuizEndPage extends StatelessWidget {
     final title = '${ujian.type} - ${ujian.subject}';
     return Scaffold(
       backgroundColor: ColorsApp.secondaryColor,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 8),
-            Center(
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: const BoxDecoration(
-                  color: ColorsApp.primaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(Icons.check, color: Colors.white, size: 120),
-                ),
-              ),
-            ),
-            const SizedBox(height: 28),
-            Text(
-              'Ujian disubmit pada ${_formatIndo(now)}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorsApp.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 320,
+                child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 22), textAlign: TextAlign.center,)),
+              const SizedBox(height: 20),
+              Center(
+                child: Container(
+                  width: 220,
+                  height: 220,
+                  decoration: const BoxDecoration(
+                    color: ColorsApp.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.check, color: Colors.white, size: 120),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => MyHomePage()),
-                    (route) => false,
-                  );
-                },
-                child: const Text(
-                  'Kembali ke menu utama',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'Ujian disubmit pada ${_formatIndo(now)}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorsApp.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => MyHomePage()),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'Kembali ke menu utama',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-          ],
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );

@@ -38,12 +38,19 @@ class _QuizPageState extends State<QuizPage> {
     List<QuizModel> qList = widget.ujian.quizList;
     qList[currentQuestion].isFinished = true;
     if (currentQuestion + 1 >= qList.length) {
-      Navigator.push(
+      endQuiz(context, 
+      (){
+        Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => QuizEndPage(ujian: widget.ujian),
         ),
       );
+      }, 
+      (){
+        Navigator.pop(context);
+      });
+      
     } else {
       currentQuestion++;
       setState(() {
