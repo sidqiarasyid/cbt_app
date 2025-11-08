@@ -32,8 +32,6 @@ class QuizEndPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = submittedAt ?? DateTime.now();
     final title = '${ujian.type} - ${ujian.subject}';
-
-    
     return Scaffold(
       backgroundColor: ColorsApp.secondaryColor,
       appBar: AppBar(
