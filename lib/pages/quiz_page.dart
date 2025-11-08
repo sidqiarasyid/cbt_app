@@ -1,5 +1,6 @@
 import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
+import 'package:cbt_app/pages/quiz_blocked_page.dart';
 import 'package:cbt_app/pages/quiz_end_page.dart';
 import 'package:cbt_app/pages/quiz_essay_page.dart';
 import 'package:cbt_app/pages/quiz_picker.dart';
@@ -109,6 +110,9 @@ class _QuizPageState extends State<QuizPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      IconButton(onPressed: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => QuizBlockedPage(),));
+                      }, icon: Icon(Icons.cancel,), iconSize: 30,)
                     ],
                   ),
                   Row(
