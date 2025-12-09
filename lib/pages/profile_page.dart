@@ -13,6 +13,9 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _roleController = TextEditingController();
+  final TextEditingController _kelasController = TextEditingController();
+  final TextEditingController _nikController = TextEditingController();
+  final TextEditingController _jurusanController = TextEditingController();
   bool _isEditing = false;
 
   @override
@@ -20,6 +23,9 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     _nameController.text = "Sidqi Ramadhan";
     _roleController.text = "Siswa";
+    _kelasController.text = "9B";
+    _nikController.text = "120938102";
+    _jurusanController.text = "IPA";
   }
 
   void _toggleEdit() {
@@ -106,11 +112,12 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Column(
                 children: [
                   const SizedBox(height: 24),
-                  const Image(
-                    image: AssetImage('assets/images/profile.png'),
-                    height: 150,
+                  // sudah bisa otomatis membuat avatar menjadi bulat/lingkaran
+                  const CircleAvatar(
+                    radius: 75,
+                    backgroundImage: AssetImage('assets/images/profile.png'),
                   ),
-                  const SizedBox(height: 75),
+                  const SizedBox(height: 50),
                   if (_isEditing) ...[
                     TextFormField(
                       controller: _nameController,
@@ -156,7 +163,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 5),
                     ListTile(
                       title: const Text(
                         'Role',
@@ -167,6 +174,55 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       subtitle: Text(
                         _roleController.text,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    ListTile(
+                      title: const Text(
+                        'Kelas',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _kelasController.text,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text(
+                        'Jurusan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _jurusanController.text,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text(
+                        'NIK',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      subtitle: Text(
+                        _nikController.text,
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
