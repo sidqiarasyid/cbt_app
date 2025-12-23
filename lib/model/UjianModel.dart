@@ -17,7 +17,7 @@ class UjianModel {
     required this.teacher,
     required this.type,
     required this.ujianImage,
-    required this.quizList
+    required this.quizList,
   }
   );
 }
