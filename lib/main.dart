@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
+ 
   const MyHomePage({super.key});
 
   @override
@@ -41,15 +42,22 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    HomePage(),
-    HistoryPage(),
-    ProfilePage(),
-  ];
+  late final List<Widget> _pages;
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = <Widget>[
+      HomePage(),
+      HistoryPage(),
+      ProfilePage(),
+    ];
   }
 
   @override
