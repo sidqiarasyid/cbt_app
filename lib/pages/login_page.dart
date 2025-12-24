@@ -1,3 +1,5 @@
+import 'package:cbt_app/model/user_model.dart';
+import 'package:cbt_app/services/LoginService.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 import '../main.dart';
@@ -10,15 +12,53 @@ class Loginpage extends StatefulWidget {
 }
 
 class _LoginpageState extends State<Loginpage> {
-  final TextEditingController Passwordconroller = TextEditingController();
+  final TextEditingController userController = TextEditingController();
+  final TextEditingController passController = TextEditingController();
   bool isPasswordVisible = false;
+  bool isLoading = false;
+  LoginService loginService = new LoginService(); 
+
+  Future<void> login() async{
+    if(userController.text.isNotEmpty && passController.text.isNotEmpty){
+      try{
+         setState(() {
+          isLoading = !isLoading;
+         });
+         UserModel res = await loginService.loginSiswa(userController.text, passController.text);   
+         if(res.nama_lengkap.isNotEmpty){
+         Navigator.push(context, MaterialPageRoute(builder: (context) => MyHomePage(),));
+
+      }
+      } catch (e){
+        if(e.toString().contains('invalid-credentials')) {
+           const snackbar = SnackBar(content: Text("Password yang dimasukkan salah"));
+           ScaffoldMessenger.of(context).showSnackBar(snackbar);
+        } else if(e.toString().contains('user-notfound')) {
+          const snackbar = SnackBar(content: Text("User tidak ditemukan"));
+           ScaffoldMessenger.of(context).showSnackBar(snackbar);
+        } else {
+          const snackbar = SnackBar(content: Text("Terjadi kesalahan, silahkan coba lagi nanti"));
+          ScaffoldMessenger.of(context).showSnackBar(snackbar);
+        }
+      }
+      setState(() {
+       isLoading = !isLoading;
+      });
+
+    } else {
+      const snackbar = SnackBar(content: Text("Isi Username atau Password Terlebih dahulu"));
+      ScaffoldMessenger.of(context).showSnackBar(snackbar);
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Center(
+        child: isLoading ? Center(child: CircularProgressIndicator()) :  Center(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 50),
             child: Column(
@@ -36,6 +76,7 @@ class _LoginpageState extends State<Loginpage> {
                 const SizedBox(height: 20),
 
                 TextField(
+                  controller: userController,
                   decoration: InputDecoration(
                     hintText: 'Username',
                     border: OutlineInputBorder(
@@ -48,7 +89,7 @@ class _LoginpageState extends State<Loginpage> {
                 const SizedBox(height: 15),
 
                 TextField(
-                  controller: Passwordconroller,
+                  controller: passController,
                   obscureText: !isPasswordVisible,
                   obscuringCharacter: '*',
                   decoration: InputDecoration(
@@ -84,15 +125,7 @@ class _LoginpageState extends State<Loginpage> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const MyHomePage(),
-                        ),
-                      );
-                    },
+                    onPressed: () => login(),
                     child: const Text(
                       'Login',
                       style: TextStyle(color: Colors.white, fontSize: 16),

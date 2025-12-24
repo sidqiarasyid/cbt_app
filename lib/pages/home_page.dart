@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../widgets/ExamCard.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +57,8 @@ class HomePage extends StatelessWidget {
         teacher: "Pak Budi", 
         type: "UTS", 
         ujianImage: 'assets/images/c1.jpg',
-        quizList: quizList1),
+        quizList: quizList1,),
+        
       UjianModel(
         subject: "Bahasa Indonesia-Advanced", 
         grade: "X IPS B", 
@@ -65,7 +66,7 @@ class HomePage extends StatelessWidget {
         teacher: "Bu Maryam", 
         type: "UTS", 
         ujianImage: 'assets/images/c2.jpg',
-        quizList: quizList1
+        quizList: quizList1,
         ),
       UjianModel(
         subject: "Matematika Lanjutan (Susah)", 
@@ -74,7 +75,8 @@ class HomePage extends StatelessWidget {
         teacher: "Bu Rini", 
         type: "UTS", 
         ujianImage: 'assets/images/c1.jpg',
-        quizList: quizList1),
+        quizList: quizList1,
+        ),
     ];
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -127,8 +129,8 @@ class HomePage extends StatelessWidget {
             Expanded(
               child: ListView.separated(
                 itemCount: ujianList.length,
-                itemBuilder: (context, index) {
-                  return Padding(
+                itemBuilder: (context, index) {    
+                    return Padding(
                     padding: const EdgeInsets.only(left: 16, right: 16),
                     child: ExamCard(
                           date: ujianList[index].date,
