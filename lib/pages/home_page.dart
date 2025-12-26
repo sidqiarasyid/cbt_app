@@ -3,10 +3,18 @@ import 'package:cbt_app/model/UjianModel.dart';
 import 'package:cbt_app/pages/quiz_page.dart';
 import 'package:cbt_app/widgets/StartDialog.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/ExamCard.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  
 
   @override
   Widget build(BuildContext context) {
@@ -94,9 +102,15 @@ class HomePage extends StatelessWidget {
                 children: [
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Selamat Datang Sidqi',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                    child: FutureBuilder<SharedPreferences>(
+                      future: SharedPreferences.getInstance(),
+                      builder: (context, asyncSnapshot) { 
+                        String? name = asyncSnapshot.data?.getString('username'); 
+                        return Text(
+                          'Selamat Datang ${name}',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                        );
+                      }
                     ),
                   ),
                   Positioned(

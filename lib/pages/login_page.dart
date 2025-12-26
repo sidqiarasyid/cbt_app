@@ -2,6 +2,7 @@ import 'package:cbt_app/model/user_model.dart';
 import 'package:cbt_app/services/LoginService.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 
 class Loginpage extends StatefulWidget {
@@ -17,15 +18,19 @@ class _LoginpageState extends State<Loginpage> {
   bool isPasswordVisible = false;
   bool isLoading = false;
   LoginService loginService = new LoginService(); 
+  
 
   Future<void> login() async{
+    SharedPreferences myPref = await SharedPreferences.getInstance();
     if(userController.text.isNotEmpty && passController.text.isNotEmpty){
       try{
          setState(() {
           isLoading = !isLoading;
          });
          UserModel res = await loginService.loginSiswa(userController.text, passController.text);   
-         if(res.nama_lengkap.isNotEmpty){
+         if(res.user.profile.namaLengkap.isNotEmpty){
+          await myPref.setString('token', res.token);
+          await myPref.setString('username', res.user.profile.namaLengkap);
          Navigator.push(context, MaterialPageRoute(builder: (context) => MyHomePage(),));
 
       }
@@ -37,7 +42,8 @@ class _LoginpageState extends State<Loginpage> {
           const snackbar = SnackBar(content: Text("User tidak ditemukan"));
            ScaffoldMessenger.of(context).showSnackBar(snackbar);
         } else {
-          const snackbar = SnackBar(content: Text("Terjadi kesalahan, silahkan coba lagi nanti"));
+          String error = e.toString();
+          var snackbar = SnackBar(content: Text("Terjadi kesalahan, silahkan coba lagi nanti ${error}"));
           ScaffoldMessenger.of(context).showSnackBar(snackbar);
         }
       }
