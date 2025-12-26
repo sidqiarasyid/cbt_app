@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:cbt_app/utlis/url.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:cbt_app/model/user_model.dart';
 
 class LoginService {
 
-  final url = Uri.parse('http://192.168.184.116:3000/api/auth/login');
+  final url = Uri.parse('${Url.deviceUrl}/auth/login');
 
   Future<UserModel> loginSiswa(String username, String password) async{
     final Map<String, dynamic> body = {
@@ -22,8 +23,7 @@ class LoginService {
 
       if (response.statusCode == 200){
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        final userJson = bodyMap['user'] ?? bodyMap;
-        return UserModel.fromJson(userJson);
+        return UserModel.fromJson(bodyMap);
       } else if(response.statusCode == 401){
         throw Exception('invalid-credentials');
       }  else if(response.statusCode == 404){
