@@ -9,6 +9,8 @@ class ExamCard extends StatelessWidget {
   final String grade;
   final String imageUrl;
   final VoidCallback onBtnPressed;
+  final String? status; // Optional status field
+  final double? score; // Optional score field
 
   const ExamCard({
     super.key,
@@ -18,7 +20,9 @@ class ExamCard extends StatelessWidget {
     required this.teacher,
     required this.grade,
     required this.imageUrl,
-    required this.onBtnPressed
+    required this.onBtnPressed,
+    this.status,
+    this.score,
   });
 
   @override
@@ -26,12 +30,12 @@ class ExamCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -43,11 +47,11 @@ class ExamCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
                 child: Container(
-                  height: 150,
+                  height: 160,
                   width: double.infinity,
                   decoration: BoxDecoration(color: Colors.grey[300]),
                   child: Image.asset(
@@ -68,30 +72,89 @@ class ExamCard extends StatelessWidget {
               ),
               // Date overlay
               Positioned(
-                top: 0,
-                left: 0,
+                top: 12,
+                right: 12,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: 14,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      bottomRight: Radius.circular(12),
-                      topLeft: Radius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
                     ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFF11B1E2).withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    date,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        date,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+              // Status badge (if available)
+              if (status != null)
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(status!),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _getStatusIcon(status!),
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          _getStatusText(status!),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -110,14 +173,67 @@ class ExamCard extends StatelessWidget {
                       Text(
                         subject,
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          height: 1.3,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        school,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: ColorsApp.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              school,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: ColorsApp.primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // Show score if available
+                          if (score != null) ...[
+                            SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    size: 14,
+                                    color: Colors.orange.shade600,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    score!.toStringAsFixed(0),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.green.shade700,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -125,22 +241,18 @@ class ExamCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 6,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: ColorsApp.pillFillColorRed,
-                    border: Border.all(
-                      color: ColorsApp.pillStrokeColorRed,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     grade,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: ColorsApp.pillStrokeColorRed,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.orange.shade700,
                     ),
                   ),
                 ),
@@ -152,49 +264,106 @@ class ExamCard extends StatelessWidget {
           // Teacher Info
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.grey[400],
-                  child: const Icon(
-                    Icons.person,
-                    size: 20,
-                    color: Colors.white,
+            child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.person_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  teacher,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pengajar',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          teacher,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 16),
 
           // Action Button
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-            child: SizedBox(
+            child: Container(
               width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF11B1E2).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
               child: ElevatedButton(
                 onPressed: onBtnPressed,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyan[400],
+                  backgroundColor: Colors.transparent,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  elevation: 0,
                 ),
-                child: const Text(
-                  'Kerjakan',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _getButtonText(),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(
+                      status == 'DINILAI'
+                          ? Icons.bar_chart_rounded
+                          : Icons.arrow_forward_rounded,
+                      size: 20,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -202,5 +371,60 @@ class ExamCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Helper methods for status
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'BELUM_MULAI':
+        return Colors.blue.shade600;
+      case 'SEDANG_BERLANGSUNG':
+        return Colors.orange.shade600;
+      case 'DINILAI':
+        return Colors.green.shade600;
+      case 'SELESAI':
+        return Colors.grey.shade600;
+      default:
+        return Colors.blue.shade600;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'BELUM_MULAI':
+        return Icons.schedule_rounded;
+      case 'SEDANG_BERLANGSUNG':
+        return Icons.pending_rounded;
+      case 'DINILAI':
+        return Icons.check_circle_rounded;
+      case 'SELESAI':
+        return Icons.done_all_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'BELUM_MULAI':
+        return 'Belum Mulai';
+      case 'SEDANG_BERLANGSUNG':
+        return 'Berlangsung';
+      case 'DINILAI':
+        return 'Selesai';
+      case 'SELESAI':
+        return 'Selesai';
+      default:
+        return status;
+    }
+  }
+
+  String _getButtonText() {
+    if (status == 'DINILAI') {
+      return 'Lihat Nilai';
+    } else if (status == 'SEDANG_BERLANGSUNG') {
+      return 'Lanjutkan';
+    }
+    return 'Mulai Ujian';
   }
 }
