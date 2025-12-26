@@ -23,36 +23,49 @@ class _LoginpageState extends State<Loginpage> {
   Future<void> login() async{
     SharedPreferences myPref = await SharedPreferences.getInstance();
     if(userController.text.isNotEmpty && passController.text.isNotEmpty){
+      setState(() {
+        isLoading = true;
+      });
+      
       try{
-         setState(() {
-          isLoading = !isLoading;
-         });
          UserModel res = await loginService.loginSiswa(userController.text, passController.text);   
          if(res.user.profile.namaLengkap.isNotEmpty){
           await myPref.setString('token', res.token);
           await myPref.setString('username', res.user.profile.namaLengkap);
-         Navigator.push(context, MaterialPageRoute(builder: (context) => MyHomePage(),));
-
-      }
+          
+          if(!mounted) return;
+          Navigator.pushReplacement(
+            context, 
+            MaterialPageRoute(builder: (context) => MyHomePage()),
+          );
+        }
       } catch (e){
-        if(e.toString().contains('invalid-credentials')) {
-           const snackbar = SnackBar(content: Text("Password yang dimasukkan salah"));
-           ScaffoldMessenger.of(context).showSnackBar(snackbar);
-        } else if(e.toString().contains('user-notfound')) {
-          const snackbar = SnackBar(content: Text("User tidak ditemukan"));
-           ScaffoldMessenger.of(context).showSnackBar(snackbar);
-        } else {
-          String error = e.toString();
-          var snackbar = SnackBar(content: Text("Terjadi kesalahan, silahkan coba lagi nanti ${error}"));
-          ScaffoldMessenger.of(context).showSnackBar(snackbar);
+        if(!mounted) return;
+        
+        // Extract error message
+        String errorMessage = e.toString().replaceAll('Exception: ', '');
+        
+        final snackbar = SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(16),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackbar);
+        
+        print('Login error: $e');
+      } finally {
+        if(mounted) {
+          setState(() {
+            isLoading = false;
+          });
         }
       }
-      setState(() {
-       isLoading = !isLoading;
-      });
-
     } else {
-      const snackbar = SnackBar(content: Text("Isi Username atau Password Terlebih dahulu"));
+      const snackbar = SnackBar(
+        content: Text("Isi Username dan Password terlebih dahulu"),
+        backgroundColor: Colors.orange,
+      );
       ScaffoldMessenger.of(context).showSnackBar(snackbar);
     }
   }

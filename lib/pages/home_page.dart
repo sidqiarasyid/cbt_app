@@ -131,15 +131,15 @@ class _HomePageState extends State<HomePage> {
         final ujianData = snapshot.data!;
         final ujianList = ujianData.ujians;
 
-    return Scaffold(
+        return Scaffold(
           backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          body: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 // Enhanced Header with Gradient
                 Container(
-              width: double.infinity,
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -154,8 +154,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-              child: Stack(
-                children: [
+                  child: Stack(
+                    children: [
                       // Content
                       Padding(
                         padding: const EdgeInsets.symmetric(
@@ -215,14 +215,14 @@ class _HomePageState extends State<HomePage> {
                               ],
                             ),
                           ],
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+                ),
+                const SizedBox(height: 24),
                 // Section Title
-            Padding(
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
                     children: [
@@ -263,11 +263,11 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ],
-              ),
-            ),
-            SizedBox(height: 16),
+                  ),
+                ),
+                SizedBox(height: 16),
                 // Exam List
-            Expanded(
+                Expanded(
                   child: ujianList.isEmpty
                       ? Center(
                           child: Column(
@@ -352,40 +352,159 @@ class _HomePageState extends State<HomePage> {
                                       );
                                     }
                                   : () {
-                                      // Start quiz
-                                      startQuiz(
+                                      // Start quiz dengan API
+                                      _startUjianWithAPI(
                                         context,
+                                        pesertaUjian,
                                         ujian.namaUjian,
                                         ujian.tanggalMulai,
-                                        () {
-                                          Navigator.pop(context);
-                                          // TODO: Navigate to quiz page with actual quiz data
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Fitur ujian akan segera tersedia',
-                                              ),
-                                              backgroundColor: Color(
-                                                0xFF11B1E2,
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                        ujian.durasiMenit,
                                       );
                                     },
                             );
                           },
                           separatorBuilder: (context, index) {
                             return SizedBox(height: 16);
-                },
+                          },
                         ),
-            )
-          ],
-        ),
-      ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  // Method untuk start ujian dengan API call
+  void _startUjianWithAPI(
+    BuildContext context,
+    PesertaUjian pesertaUjian,
+    String namaUjian,
+    DateTime tanggalMulai,
+    int durasiMenit,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StartDialog(
+          subject: namaUjian,
+          examDate: tanggalMulai,
+          btnPressed: () async {
+            Navigator.pop(context); // Close dialog
+
+            // Show loading
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => Center(
+                child: Container(
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: Color(0xFF11B1E2)),
+                      SizedBox(height: 16),
+                      Text(
+                        'Memuat soal ujian...',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+
+            try {
+              // Call API startUjian
+              final startUjianResponse = await _ujianService.startUjian(
+                pesertaUjian.pesertaUjianId,
+              );
+
+              print('📥 API Response received');
+              print(
+                'Total soal from API: ${startUjianResponse.soalList.length}',
+              );
+
+              // Convert soal dari API ke QuizModel
+              List<QuizModel> quizList = startUjianResponse.soalList.map((
+                soalUjian,
+              ) {
+                try {
+                  return QuizModel.fromSoalUjian(soalUjian);
+                } catch (e) {
+                  print('❌ Error converting soal ${soalUjian.soal.soalId}: $e');
+                  rethrow;
+                }
+              }).toList();
+
+              print('✅ QuizList created: ${quizList.length} items');
+
+              // Create UjianModel untuk QuizPage
+              UjianModel ujianModel = UjianModel(
+                subject: namaUjian,
+                grade: pesertaUjian.ujian.tingkat,
+                date: _formatDate(tanggalMulai),
+                teacher: pesertaUjian.ujian.mataPelajaran,
+                type: 'Ujian',
+                ujianImage: 'assets/images/c1.jpg',
+                quizList: quizList,
+                pesertaUjianId: pesertaUjian.pesertaUjianId,
+                durasiMenit: startUjianResponse.pesertaUjian.durasiMenit,
+                waktuMulai: startUjianResponse.pesertaUjian.waktuMulai,
+                tanggalSelesai: pesertaUjian.ujian.tanggalSelesai, // Waktu deadline ujian
+              );
+
+              // Close loading
+              if (context.mounted) {
+                Navigator.pop(context);
+
+                // Navigate to QuizPage
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => QuizPage(ujian: ujianModel),
+                  ),
+                ).then((_) {
+                  // Refresh data when back from quiz
+                  setState(() {
+                    _futureUjians = _ujianService.getUjianSiswa();
+                  });
+                });
+              }
+            } catch (e) {
+              // Close loading
+              if (context.mounted) {
+                Navigator.pop(context);
+
+                // Show error dialog
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Gagal'),
+                      ],
+                    ),
+                    content: Text(e.toString().replaceAll('Exception: ', '')),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            }
+          },
+        );
       },
     );
   }
@@ -397,11 +516,14 @@ startQuiz(
   DateTime examDate,
   VoidCallback btnPressed,
 ) {
-  showDialog(context: context, builder: (BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
       return StartDialog(
         subject: sub,
         examDate: examDate,
         btnPressed: btnPressed,
       );
-  },);
+    },
+  );
 }

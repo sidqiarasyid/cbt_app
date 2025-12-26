@@ -31,7 +31,7 @@ class QuizEndPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = submittedAt ?? DateTime.now();
-    final title = '${ujian.type} - ${ujian.subject}';
+    final title = ujian.subject; // Use actual ujian name from subject field
     return Scaffold(
       backgroundColor: ColorsApp.secondaryColor,
       body: SafeArea(

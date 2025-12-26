@@ -1,5 +1,6 @@
 
 import 'package:cbt_app/model/QuizModel.dart';
+import 'package:cbt_app/model/UjianModel.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/PickerItem.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,8 @@ import 'package:flutter/material.dart';
 class QuizPicker extends StatefulWidget {
   final List<QuizModel> quizList;
   final int currItem;
-  const QuizPicker({super.key, required this.quizList, required this.currItem});
+  final UjianModel ujian;
+  const QuizPicker({super.key, required this.quizList, required this.currItem, required this.ujian});
 
   @override
   State<QuizPicker> createState() => _QuizPickerState();
@@ -35,7 +37,13 @@ class _QuizPickerState extends State<QuizPicker> {
                       icon: Icon(Icons.arrow_back),
                       iconSize: 30,
                     ),
-                    Text("Ujian - Tipe Ujian", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),)
+                    Expanded(
+                      child: Text(
+                        widget.ujian.subject,
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -50,12 +58,12 @@ class _QuizPickerState extends State<QuizPicker> {
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: ColorsApp.primaryColor,
+                      color: Colors.green,
                       borderRadius: BorderRadius.circular(4)
                     ),
                   ),
                   SizedBox(width:  MediaQuery.of(context).size.width * 0.01,),
-                  Text("Selesai"),
+                  Text("Dijawab"),
                   SizedBox(width: MediaQuery.of(context).size.width * 0.02,),
                   Container(
                     width: 20,
@@ -66,7 +74,7 @@ class _QuizPickerState extends State<QuizPicker> {
                     ),
                   ),
                   SizedBox(width:  MediaQuery.of(context).size.width * 0.01,),
-                  Text("Soal saat ini"),
+                  Text("Saat ini"),
                   SizedBox(width: MediaQuery.of(context).size.width * 0.02,),
                   Container(
                     width: 20,
@@ -79,7 +87,7 @@ class _QuizPickerState extends State<QuizPicker> {
                     ),
                   ),
                   SizedBox(width:  MediaQuery.of(context).size.width * 0.01,),
-                  Text("Belum dikerjakan")
+                  Text("Belum dijawab")
                 ],
               ),
             ),
@@ -96,21 +104,22 @@ class _QuizPickerState extends State<QuizPicker> {
                   ), 
                   itemBuilder: (context, index) {
                     QuizModel qItem = widget.quizList[index];
+                    bool isAnswered = qItem.hasAnswer;
+                    
                     return PickerItem(
                       cont: "${index + 1}",
                       bgColor: 
-                      (index == widget.currItem) ? Color(0xff03356C) :
-                      (qItem.isFinished == true) ? ColorsApp.primaryColor :
-                      ColorsApp.secondaryColor
-                      ,
+                        (index == widget.currItem) ? Color(0xff03356C) :
+                        (isAnswered) ? Colors.green :
+                        ColorsApp.secondaryColor,
                       contColor: 
-                      (index == widget.currItem) ? ColorsApp.backgroundColor :
-                      (qItem.isFinished == true) ?  ColorsApp.backgroundColor:
-                      Colors.black,
+                        (index == widget.currItem) ? ColorsApp.backgroundColor :
+                        (isAnswered) ? ColorsApp.backgroundColor :
+                        Colors.black,
                       brdColor: 
-                      (index == widget.currItem) ? ColorsApp.backgroundColor :
-                      (qItem.isFinished == true) ?  ColorsApp.backgroundColor:
-                      Colors.black,
+                        (index == widget.currItem) ? ColorsApp.backgroundColor :
+                        (isAnswered) ? ColorsApp.backgroundColor :
+                        Colors.black,
                       pickerTap: (){
                         Navigator.pop(context, index);
                       },
