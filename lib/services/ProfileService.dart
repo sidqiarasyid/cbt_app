@@ -8,9 +8,9 @@ import 'package:cbt_app/model/user_model.dart';
 class ProfileService {
   // Fetch current user profile from server
   // NOTE: change endpoint if your backend uses a different path (e.g. /auth/me)
-  final Uri _meUrl = Uri.parse('${Url.deviceUrl}/auth/me');
+  final Uri _meUrl = Uri.parse('${Url.emuUrl}/auth/me');
   // NOTE: change endpoint for update to match your backend
-  final Uri _updateUrl = Uri.parse('${Url.deviceUrl}/profile');
+  final Uri _updateUrl = Uri.parse('${Url.emuUrl}/profile');
 
   Future<UserModel> fetchProfile() async {
     final String? token = await SessionManager.getToken();
