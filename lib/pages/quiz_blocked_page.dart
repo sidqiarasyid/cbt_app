@@ -47,16 +47,6 @@ class _QuizBlockedPageState extends State<QuizBlockedPage> {
                 style: const TextStyle(fontSize: 16),
               ),
               SizedBox(height: 20,),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Kode ujian',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    filled: true,
-                    fillColor: ColorsApp.secondaryColor,
-                ),
-              ),
               SizedBox(height: 20,),
               SizedBox(
                 width: double.infinity,
