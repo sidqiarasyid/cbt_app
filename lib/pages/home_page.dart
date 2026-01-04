@@ -43,9 +43,6 @@ class _HomePageState extends State<HomePage> {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
 
   @override
   Widget build(BuildContext context) {

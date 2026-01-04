@@ -37,12 +37,13 @@ class _QuizPickerState extends State<QuizPicker> {
                       icon: Icon(Icons.arrow_back),
                       iconSize: 30,
                     ),
-                    Expanded(
+                    SizedBox(
+                      width: 300,
                       child: Text(
-                        widget.ujian.subject,
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                          widget.ujian.subject,
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                     ),
                   ],
                 ),
