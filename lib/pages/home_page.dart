@@ -385,6 +385,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return StartDialog(
+          okText: "Mulai Ujian",
           subject: namaUjian,
           examDate: tanggalMulai,
           btnPressed: () async {
@@ -518,6 +519,7 @@ startQuiz(
     context: context,
     builder: (BuildContext context) {
       return StartDialog(
+        okText: "Mulai Ujian",
         subject: sub,
         examDate: examDate,
         btnPressed: btnPressed,
