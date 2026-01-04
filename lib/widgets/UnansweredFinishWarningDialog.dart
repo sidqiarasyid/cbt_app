@@ -63,7 +63,7 @@ class UnansweredFinishWarningDialog extends StatelessWidget {
               ),
               SizedBox(height: 12),
               Text(
-                "Apakah anda yakin ingin menyelesaikan ujian?",
+                "Soal yang belum dijawab akan dinilai 0.\n\nApakah anda yakin ingin menyelesaikan ujian sekarang?",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -92,10 +92,10 @@ class UnansweredFinishWarningDialog extends StatelessWidget {
                       ),
                       onPressed: onContinueFinish,
                       child: Text(
-                        "Tetap Selesaikan", 
+                        "Ya, Selesaikan", 
                         style: TextStyle(
                           color: Colors.white, 
-                          fontSize: 12,
+                          fontSize: 13,
                         ),
                       ),
                     ),

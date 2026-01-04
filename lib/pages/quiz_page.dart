@@ -499,24 +499,9 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
         builder: (context) {
           return UnansweredFinishWarningDialog(
             unansweredCount: unansweredCount,
-            onContinueFinish: () {
+            onContinueFinish: () async {
               Navigator.pop(context); // Close warning
-              // Show finish confirmation anyway
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) {
-                  return FinishQuizDialog(
-                    onYesPressed: () async {
-                      Navigator.pop(context); // Close dialog
-                      await _finishQuiz();
-                    },
-                    onNoPressed: () {
-                      Navigator.pop(context);
-                    },
-                  );
-                },
-              );
+              await _finishQuiz(); // Directly finish quiz
             },
             onBack: () {
               Navigator.pop(context); // Back to quiz
