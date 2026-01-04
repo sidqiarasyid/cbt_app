@@ -8,6 +8,9 @@ import 'package:cbt_app/pages/quiz_pilgan_page.dart';
 import 'package:cbt_app/services/UjianService.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/EndQuizDialog.dart';
+import 'package:cbt_app/widgets/FinishQuizDialog.dart';
+import 'package:cbt_app/widgets/UnansweredWarningDialog.dart';
+import 'package:cbt_app/widgets/UnansweredFinishWarningDialog.dart';
 import 'package:flutter/material.dart';
 
 
@@ -297,61 +300,274 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     }
   }
 
-  void _showFinishConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return EndQuizDialog(
-          onYesPressed: () async {
-            Navigator.pop(context); // Close dialog
-            
-            // Show loading
+  void previousQuestion() {
+    if (currentQuestion > 0) {
+      currentQuestion--;
+      setState(() {
+        loadCurrentQuestion();
+      });
+    }
+  }
+
+  void _showExitConfirmation() {
+    List<QuizModel> qList = widget.ujian.quizList;
+    int answeredCount = qList.where((q) => q.hasAnswer).length;
+    int totalCount = qList.length;
+    int unansweredCount = totalCount - answeredCount;
+    
+    if (unansweredCount == 0) {
+      // All answered - show different message
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0.0,
+          insetPadding: EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: ColorsApp.secondaryColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.help_outline, size: 50, color: Colors.blue),
+                  SizedBox(height: 10),
+                  Text(
+                    "Keluar Ujian?",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    "Semua soal telah dijawab.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Apakah anda ingin:",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  // Finish Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context); // Close dialog
+                        _showFinishConfirmation();
+                      },
+                      child: Text(
+                        "Selesaikan Ujian",
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  // Exit without finish button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context); // Close first dialog
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => EndQuizDialog(
+                            onYesPressed: () {
+                              Navigator.pop(context); // Close dialog
+                              Navigator.pop(context); // Exit quiz
+                            },
+                            onNoPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "Keluar Tanpa Menyelesaikan",
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  // Cancel button
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        "Batal",
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      // Has unanswered - show warning
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => UnansweredWarningDialog(
+          unansweredCount: unansweredCount,
+          onContinue: () {
+            Navigator.pop(context); // Close warning
             showDialog(
               context: context,
               barrierDismissible: false,
-              builder: (context) => Center(child: CircularProgressIndicator()),
+              builder: (context) => EndQuizDialog(
+                onYesPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Exit quiz
+                },
+                onNoPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
             );
-            
-            try {
-              final result = await _ujianService.finishUjian(widget.ujian.pesertaUjianId);
-              
-              if (!mounted) return;
-              Navigator.pop(context); // Close loading
-              Navigator.pop(context); // Exit quiz page
-              
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Ujian berhasil diselesaikan!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              
-              print('✅ Ujian finished with result: $result');
-            } catch (e) {
-              if (!mounted) return;
-              Navigator.pop(context); // Close loading
-              
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text('Error'),
-                  content: Text('Gagal menyelesaikan ujian: $e'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            }
           },
-          onNoPressed: () {
+          onBack: () {
             Navigator.pop(context);
           },
-        );
-      },
+        ),
+      );
+    }
+  }
+
+  void _showFinishConfirmation() {
+    List<QuizModel> qList = widget.ujian.quizList;
+    int answeredCount = qList.where((q) => q.hasAnswer).length;
+    int totalCount = qList.length;
+    int unansweredCount = totalCount - answeredCount;
+    bool allAnswered = unansweredCount == 0;
+    
+    if (allAnswered) {
+      // All questions answered - show finish confirmation
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return FinishQuizDialog(
+            onYesPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await _finishQuiz();
+            },
+            onNoPressed: () {
+              Navigator.pop(context);
+            },
+          );
+        },
+      );
+    } else {
+      // Some questions unanswered - show warning first
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return UnansweredFinishWarningDialog(
+            unansweredCount: unansweredCount,
+            onContinueFinish: () {
+              Navigator.pop(context); // Close warning
+              // Show finish confirmation anyway
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) {
+                  return FinishQuizDialog(
+                    onYesPressed: () async {
+                      Navigator.pop(context); // Close dialog
+                      await _finishQuiz();
+                    },
+                    onNoPressed: () {
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              );
+            },
+            onBack: () {
+              Navigator.pop(context); // Back to quiz
+            },
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _finishQuiz() async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(child: CircularProgressIndicator()),
     );
+    
+    try {
+      final result = await _ujianService.finishUjian(widget.ujian.pesertaUjianId);
+      
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+      Navigator.pop(context); // Exit quiz page
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ujian berhasil diselesaikan!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      print('✅ Ujian finished with result: $result');
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
+      
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('Gagal menyelesaikan ujian: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Future<void> navigatePicker(
@@ -367,6 +583,18 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
           quizList: qList, 
           currItem: curItem,
           ujian: widget.ujian,
+          onFinishQuiz: () async {
+            // Close picker
+            Navigator.pop(context);
+            // Finish quiz
+            await _finishQuiz();
+          },
+          onExitQuiz: () {
+            // Close picker
+            Navigator.pop(context);
+            // Exit quiz page without finishing
+            Navigator.pop(context);
+          },
         ),
       ),
     );
@@ -412,18 +640,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                     children: [
                       IconButton(
                         onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => EndQuizDialog(
-                              onYesPressed: () async {
-                                Navigator.pop(context); // Close dialog
-                                Navigator.pop(context); // Exit quiz page without finishing
-                              },
-                              onNoPressed: () {
-                                Navigator.pop(context);
-                              },
-                            ),
-                          );
+                          _showExitConfirmation();
                         },
                         icon: Icon(Icons.arrow_back),
                         iconSize: 30,
@@ -477,41 +694,120 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                 ],
               ),
             ),
-            widget.ujian.quizList[currentQuestion].quizType == "ESSAY" 
-              ? QuizEssayPage(
-                  question: ques, 
-                  controller: essayController,
-                  onChanged: () {
-                    // Auto-save essay after debounce
-                    _submitAnswer();
-                  },
-                ) 
-              : QuizPilganPage(
-                  key: ValueKey('soal_${widget.ujian.quizList[currentQuestion].soalId}_$currentQuestion'),
-                  question: ques, 
-                  answerList: answer,
-                  initialSelectedIndex: widget.ujian.quizList[currentQuestion].selectedAnswerIndex,
-                  initialSelectedIndices: widget.ujian.quizList[currentQuestion].selectedAnswerIndices,
-                  isMultipleChoice: widget.ujian.quizList[currentQuestion].quizType == "PILIHAN_GANDA_MULTIPLE",
-                  onAnswerSelected: (selectedIndex, {selectedIndices}) {
-                    _onAnswerSelected(selectedIndex, selectedIndices: selectedIndices);
-                  },
-                ),  
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(8),
-                  ),
-                  backgroundColor: ColorsApp.primaryColor,
-                ),
-                onPressed: nextQuestion,
-                child: Text(
-                  "Selanjutnya",
-                  style: TextStyle(color: ColorsApp.secondaryColor),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    widget.ujian.quizList[currentQuestion].quizType == "ESSAY" 
+                      ? QuizEssayPage(
+                          question: ques, 
+                          controller: essayController,
+                          onChanged: () {
+                            // Auto-save essay after debounce
+                            _submitAnswer();
+                          },
+                        ) 
+                      : QuizPilganPage(
+                          key: ValueKey('soal_${widget.ujian.quizList[currentQuestion].soalId}_$currentQuestion'),
+                          question: ques, 
+                          answerList: answer,
+                          initialSelectedIndex: widget.ujian.quizList[currentQuestion].selectedAnswerIndex,
+                          initialSelectedIndices: widget.ujian.quizList[currentQuestion].selectedAnswerIndices,
+                          isMultipleChoice: widget.ujian.quizList[currentQuestion].quizType == "PILIHAN_GANDA_MULTIPLE",
+                          onAnswerSelected: (selectedIndex, {selectedIndices}) {
+                            _onAnswerSelected(selectedIndex, selectedIndices: selectedIndices);
+                          },
+                        ),  
+                    // Navigation Buttons
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                      child: Row(
+                        children: [
+                          // Previous Button
+                          if (currentQuestion > 0)
+                            Expanded(
+                              child: SizedBox(
+                                height: 50,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    backgroundColor: Colors.grey[300],
+                                    padding: EdgeInsets.symmetric(horizontal: 8),
+                                  ),
+                                  onPressed: previousQuestion,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.arrow_back, color: Colors.black87, size: 20),
+                                      SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          "Sebelumnya",
+                                          style: TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 14,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (currentQuestion > 0)
+                            SizedBox(width: 10),
+                          // Next/Finish Button
+                          Expanded(
+                            child: SizedBox(
+                              height: 50,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  backgroundColor: currentQuestion + 1 >= widget.ujian.quizList.length 
+                                    ? Colors.green 
+                                    : ColorsApp.primaryColor,
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                                onPressed: nextQuestion,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        currentQuestion + 1 >= widget.ujian.quizList.length 
+                                          ? "Selesaikan Ujian" 
+                                          : "Selanjutnya",
+                                        style: TextStyle(
+                                          color: ColorsApp.secondaryColor,
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    SizedBox(width: 6),
+                                    Icon(
+                                      currentQuestion + 1 >= widget.ujian.quizList.length 
+                                        ? Icons.check_circle 
+                                        : Icons.arrow_forward, 
+                                      color: ColorsApp.secondaryColor,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
