@@ -1,6 +1,7 @@
 import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
 import 'package:cbt_app/model/ujian_response_model.dart';
+import 'package:cbt_app/pages/quiz_blocked_page.dart';
 import 'package:cbt_app/pages/quiz_page.dart';
 import 'package:cbt_app/services/UjianService.dart';
 import 'package:cbt_app/widgets/StartDialog.dart';
@@ -374,13 +375,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Method untuk start ujian dengan API call
-  void _startUjianWithAPI(
+  Future<void> _startUjianWithAPI (
     BuildContext context,
     PesertaUjian pesertaUjian,
     String namaUjian,
     DateTime tanggalMulai,
     int durasiMenit,
-  ) {
+  )async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -441,9 +442,12 @@ class _HomePageState extends State<HomePage> {
               }).toList();
 
               print('✅ QuizList created: ${quizList.length} items');
-
+              SharedPreferences myPref = await SharedPreferences.getInstance();
+              final blockStatus = myPref.getBool("blockKey ${pesertaUjian.ujian.ujianId}");
+              
               // Create UjianModel untuk QuizPage
               UjianModel ujianModel = UjianModel(
+                ujianId: pesertaUjian.ujian.ujianId,   
                 subject: namaUjian,
                 grade: pesertaUjian.ujian.tingkat,
                 date: _formatDate(tanggalMulai),
@@ -462,8 +466,10 @@ class _HomePageState extends State<HomePage> {
               if (context.mounted) {
                 Navigator.pop(context);
 
-                // Navigate to QuizPage
-                Navigator.push(
+                if(blockStatus == true){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => QuizBlockedPage(),));
+                } else {
+                  Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => QuizPage(ujian: ujianModel),
@@ -474,6 +480,7 @@ class _HomePageState extends State<HomePage> {
                     _futureUjians = _ujianService.getUjianSiswa();
                   });
                 });
+                }
               }
             } catch (e) {
               // Close loading
