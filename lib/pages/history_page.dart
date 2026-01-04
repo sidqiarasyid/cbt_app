@@ -140,7 +140,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   isExpanded: isExpanded,
                   pilganScore: item.hasil?.nilaiAkhir,
                   essayStatus: 'Tidak ada essay',
-                  finalScore: item.hasil?.nilaiAkhir.toString(),
+                  finalScore: item.hasil?.nilaiAkhir.toStringAsFixed(2),
                   onExpandToggle: () {
                     setState(() {
                       if (isExpanded) {

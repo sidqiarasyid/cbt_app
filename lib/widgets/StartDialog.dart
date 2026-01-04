@@ -7,10 +7,12 @@ class StartDialog extends StatelessWidget {
     required this.subject,
     required this.examDate,
     required this.btnPressed,
+    required this.okText
   });
   final VoidCallback btnPressed;
   final String subject;
   final DateTime examDate;
+  final String okText;
 
   String _formatDateTime(DateTime date) {
     final days = [
@@ -168,7 +170,7 @@ class StartDialog extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Mulai Ujian",
+                            okText,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 15,

@@ -37,6 +37,8 @@ class HistoryCard extends StatelessWidget {
     final statusBorderColor = isSelesai
         ? ColorsApp.primaryColor
         : ColorsApp.pillStrokeColorRed;
+    final pilganToString = pilganScore!.toStringAsFixed(2);
+    
 
     return Container(
       decoration: BoxDecoration(
@@ -204,7 +206,7 @@ class HistoryCard extends StatelessWidget {
                       const SizedBox(height: 12),
                       _buildScoreRow(
                         'Nilai soal pilihan ganda',
-                        pilganScore?.toString() ?? '-',
+                        pilganToString.toString(),
                       ),
                       const SizedBox(height: 8),
                       _buildScoreRow('Nilai soal essay', essayStatus ?? '-'),
