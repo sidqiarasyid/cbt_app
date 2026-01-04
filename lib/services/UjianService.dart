@@ -15,7 +15,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians');
 
     try {
       final response = await http
@@ -62,7 +62,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/start');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/start');
 
     try {
       final response = await http
@@ -118,7 +118,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/jawaban');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/jawaban');
 
     try {
       final Map<String, dynamic> body = {
@@ -184,7 +184,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/finish');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/finish');
 
     try {
       final response = await http

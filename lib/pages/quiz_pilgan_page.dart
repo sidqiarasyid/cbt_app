@@ -136,7 +136,7 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 22, vertical: 20),
       child: Column(
           children: [
             Container(
@@ -152,7 +152,7 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
             ),
             SizedBox(height: 5,),
             Container(
-              height: MediaQuery.of(context).size.height * 0.38,
+              height: MediaQuery.of(context).size.height * 0.5,
               child: widget.answerList.isEmpty 
                 ? Center(
                     child: Text(
@@ -164,7 +164,11 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(
                       widget.answerList.length,
-                      (index) => buildButton(index, widget.answerList[index]),
+
+                      (index) => Column(children: [
+                        buildButton(index, widget.answerList[index]),
+                        SizedBox(height: 10,)
+                      ],),
                     ),
                   ),
             ),

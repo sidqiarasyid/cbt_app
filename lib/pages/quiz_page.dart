@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
 import 'package:cbt_app/pages/quiz_blocked_page.dart';
-import 'package:cbt_app/pages/quiz_end_page.dart';
 import 'package:cbt_app/pages/quiz_essay_page.dart';
 import 'package:cbt_app/pages/quiz_picker.dart';
 import 'package:cbt_app/pages/quiz_pilgan_page.dart';
@@ -10,6 +10,7 @@ import 'package:cbt_app/services/UjianService.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/EndQuizDialog.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class QuizPage extends StatefulWidget {
   final UjianModel ujian;
@@ -19,7 +20,7 @@ class QuizPage extends StatefulWidget {
   State<QuizPage> createState() => _QuizPageState();
 }
 
-class _QuizPageState extends State<QuizPage> {
+class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   late String ques;
   late List<String> answer;
   int currentQuestion = 0;
@@ -27,11 +28,14 @@ class _QuizPageState extends State<QuizPage> {
   Timer? _countdownTimer;
   Duration _remainingTime = Duration.zero;
   final UjianService _ujianService = UjianService();
+  DateTime? exitTime;
+  Duration? exitDuration;
+  
 
   @override
   void initState() {
     super.initState();
-    
+    WidgetsBinding.instance.addObserver(this);
     // Debug check
     if (widget.ujian.quizList.isEmpty) {
       print('❌ ERROR: quizList is empty!');
@@ -50,6 +54,25 @@ class _QuizPageState extends State<QuizPage> {
     print('✅ QuizList loaded: ${widget.ujian.quizList.length} soal');
     loadCurrentQuestion();
     _initializeTimer();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state)  { 
+    if(state == AppLifecycleState.paused || state == AppLifecycleState.inactive){
+      exitTime = DateTime.now();
+    } else if(state == AppLifecycleState.resumed){
+      if(exitTime != null){
+        exitDuration = DateTime.now().difference(exitTime!);
+        if(exitDuration!.inSeconds > 10){
+          //hit block API
+          if(mounted){
+            print("DEBUG: Duration > 5s. Attempting navigation...");
+            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => QuizBlockedPage(),), (route)=> false);
+          }
+        }
+        exitTime = null;
+      }
+    }
   }
 
   void _initializeTimer() {
@@ -115,6 +138,7 @@ class _QuizPageState extends State<QuizPage> {
   void dispose() {
     _countdownTimer?.cancel();
     essayController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -412,9 +436,6 @@ class _QuizPageState extends State<QuizPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      IconButton(onPressed: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => QuizBlockedPage(),));
-                      }, icon: Icon(Icons.cancel,), iconSize: 30,)
                     ],
                   ),
                   Row(

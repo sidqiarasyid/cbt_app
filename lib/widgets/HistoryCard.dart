@@ -8,7 +8,7 @@ class HistoryCard extends StatelessWidget {
   final String imageUrl;
   final String status; // 'selesai' or 'gagal'
   final bool isExpanded;
-  final int? pilganScore;
+  final double? pilganScore;
   final String? essayStatus;
   final String? finalScore;
   final VoidCallback onExpandToggle;
@@ -29,7 +29,7 @@ class HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSelesai = status.toLowerCase() == 'selesai';
+    final isSelesai = status == 'DINILAI';
     final statusColor = isSelesai
         ? ColorsApp.primaryColor
         : ColorsApp.pillStrokeColorRed;

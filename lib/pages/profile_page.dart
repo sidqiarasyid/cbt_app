@@ -135,6 +135,28 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Helper to show label + big value style used inside the card
+  Widget _labelValue(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[700],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        ),
+      ],
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -170,106 +192,89 @@ class _ProfilePageState extends State<ProfilePage> {
       body: Center(
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(35.0),
+            padding: const EdgeInsets.all(25.0),
             child: Column(
               children: [
                 const SizedBox(height: 24),
-                // avatar with pick button
+
+                // Stacked layout: avatar overlaps a rounded card with profile details (wider for emulator)
                 Stack(
-                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
                   children: [
-                    CircleAvatar(radius: 75, backgroundImage: avatarImage),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _showImageSourceActionSheet,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.blue,
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
+                    // Card with profile fields, taking most of the screen width
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.94,
+                      margin: const EdgeInsets.only(top: 100),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 6,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 120, 18, 28),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _labelValue('Nama', _nameController.text),
+                              const SizedBox(height: 14),
+                              _labelValue('Role', _roleController.text),
+                              const SizedBox(height: 14),
+                              _labelValue('Kelas', _kelasController.text),
+                              const SizedBox(height: 14),
+                              _labelValue('Jurusan', _jurusanController.text),
+                              const SizedBox(height: 14),
+                              _labelValue('Tingkat', _tingkatController.text),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 30),
 
-                ListTile(
-                  title: const Text(
-                    'Nama Lengkap',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                  ),
-                  subtitle: Text(
-                    _nameController.text,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
+                    // Centered avatar that overlaps the card; increased size for better visibility
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        alignment: Alignment.center,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            CircleAvatar(
+                              radius: 100,
+                              backgroundImage: avatarImage,
+                            ),
+
+                            // Camera floating button
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: _showImageSourceActionSheet,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00C6FF), // cyan-ish
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.all(10),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ListTile(
-                  title: const Text(
-                    'Role',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                  ),
-                  subtitle: Text(
-                    _roleController.text,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ListTile(
-                  title: const Text(
-                    'Kelas',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                  ),
-                  subtitle: Text(
-                    _kelasController.text,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ListTile(
-                  title: const Text(
-                    'Jurusan',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                  ),
-                  subtitle: Text(
-                    _jurusanController.text,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ListTile(
-                  title: const Text(
-                    'Tingkat',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                  ),
-                  subtitle: Text(
-                    _tingkatController.text,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ),
