@@ -1,10 +1,10 @@
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
-class EndQuizDialog extends StatelessWidget {
+class FinishQuizDialog extends StatelessWidget {
   final VoidCallback onYesPressed;
   final VoidCallback onNoPressed;
-  const EndQuizDialog({super.key, required this.onYesPressed, required this.onNoPressed});
+  const FinishQuizDialog({super.key, required this.onYesPressed, required this.onNoPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +21,12 @@ class EndQuizDialog extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Keluar Ujian", textAlign: TextAlign.center, style:  TextStyle(
+              Text("Selesaikan Ujian", textAlign: TextAlign.center, style:  TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold
               ),),
-              SizedBox(height: 5,),
-              Text("Ujian tidak akan diselesaikan.\n\nApakah anda yakin ingin keluar?", textAlign: TextAlign.center,),
+              SizedBox(height: 10,),
+              Text("Semua soal telah dijawab.\n\nApakah anda yakin ingin \nmenyelesaikan ujian ini?", textAlign: TextAlign.center,),
               SizedBox(height: 15,),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -38,17 +38,17 @@ class EndQuizDialog extends StatelessWidget {
                         backgroundColor: Colors.grey[200]
                       ),
                       onPressed: onNoPressed,
-                      child: Text("Cancel", style: TextStyle(),)
+                      child: Text("Batal", style: TextStyle(),)
                       ),
                   ),
                   SizedBox(
                     width: 100,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsApp.primaryColor
+                        backgroundColor: Colors.green
                       ),
                       onPressed: onYesPressed,
-                      child: Text("Yes", style: TextStyle(color: Colors.white, ),)
+                      child: Text("Ya, Selesai", style: TextStyle(color: Colors.white, ),)
                       ),
                   ),
                 ],

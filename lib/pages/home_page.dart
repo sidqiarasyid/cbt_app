@@ -454,7 +454,8 @@ class _HomePageState extends State<HomePage> {
                 pesertaUjianId: pesertaUjian.pesertaUjianId,
                 durasiMenit: startUjianResponse.pesertaUjian.durasiMenit,
                 waktuMulai: startUjianResponse.pesertaUjian.waktuMulai,
-                tanggalSelesai: pesertaUjian.ujian.tanggalSelesai, // Waktu deadline ujian
+                tanggalSelesai:
+                    pesertaUjian.ujian.tanggalSelesai, // Waktu deadline ujian
               );
 
               // Close loading
