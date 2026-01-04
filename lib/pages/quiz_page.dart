@@ -12,6 +12,7 @@ import 'package:cbt_app/widgets/FinishQuizDialog.dart';
 import 'package:cbt_app/widgets/UnansweredWarningDialog.dart';
 import 'package:cbt_app/widgets/UnansweredFinishWarningDialog.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class QuizPage extends StatefulWidget {
@@ -437,27 +438,17 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
         ),
       );
     } else {
-      // Has unanswered - show warning
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => UnansweredWarningDialog(
           unansweredCount: unansweredCount,
-          onContinue: () {
-            Navigator.pop(context); // Close warning
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => EndQuizDialog(
-                onYesPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Exit quiz
-                },
-                onNoPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            );
+          onContinue: () async{
+            String blockKey = "blockKey ${widget.ujian.ujianId.toString()}";
+            SharedPreferences myPref = await SharedPreferences.getInstance();
+            myPref.setBool(blockKey, true);
+            Navigator.pop(context); 
+            Navigator.pop(context);
           },
           onBack: () {
             Navigator.pop(context);
@@ -475,14 +466,13 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     bool allAnswered = unansweredCount == 0;
     
     if (allAnswered) {
-      // All questions answered - show finish confirmation
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) {
           return FinishQuizDialog(
             onYesPressed: () async {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); 
               await _finishQuiz();
             },
             onNoPressed: () {
@@ -492,7 +482,6 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
         },
       );
     } else {
-      // Some questions unanswered - show warning first
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -500,11 +489,11 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
           return UnansweredFinishWarningDialog(
             unansweredCount: unansweredCount,
             onContinueFinish: () async {
-              Navigator.pop(context); // Close warning
-              await _finishQuiz(); // Directly finish quiz
+              Navigator.pop(context);
+              await _finishQuiz(); 
             },
             onBack: () {
-              Navigator.pop(context); // Back to quiz
+              Navigator.pop(context); 
             },
           );
         },
