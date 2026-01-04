@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:cbt_app/model/QuizModel.dart';
 import 'package:cbt_app/model/UjianModel.dart';
 import 'package:cbt_app/pages/quiz_blocked_page.dart';
@@ -10,7 +9,7 @@ import 'package:cbt_app/services/UjianService.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/EndQuizDialog.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 class QuizPage extends StatefulWidget {
   final UjianModel ujian;
