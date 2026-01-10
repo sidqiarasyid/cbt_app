@@ -1,4 +1,4 @@
-import 'package:cbt_app/model/ujian_response_model.dart';
+import 'package:cbt_app/model/hasil_ujian_response_model.dart';
 import 'package:cbt_app/services/UjianService.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/HistoryCard.dart';
@@ -14,18 +14,18 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   // Track which cards are expanded
   final Set<int> _expandedCards = {};
-  late Future<UjianResponseModel> historyItem;
+  late Future<HasilUjianListResponse> historyItem;
   final UjianService ujianService = UjianService();
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    historyItem = ujianService.getUjianSiswa();
+    historyItem = ujianService.getHasilUjianSiswa();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<UjianResponseModel>(
+    return FutureBuilder<HasilUjianListResponse>(
       future: historyItem,
       builder: (context, asyncSnapshot) {
         if (asyncSnapshot.connectionState == ConnectionState.waiting) {
@@ -80,7 +80,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     ElevatedButton.icon(
                       onPressed: () {
                         setState(() {
-                          historyItem = ujianService.getUjianSiswa();
+                          historyItem = ujianService.getHasilUjianSiswa();
                         });
                       },
                       icon: Icon(Icons.refresh_rounded),
@@ -104,9 +104,8 @@ class _HistoryPageState extends State<HistoryPage> {
           );
         }
 
-        final ujianData = asyncSnapshot.data!;
-        final historyList = ujianData.ujians.where((item) => 
-        item.statusUjian == "DINILAI").toList();
+        final hasilData = asyncSnapshot.data!;
+        final historyList = hasilData.hasil;
 
         return Scaffold(
           backgroundColor: ColorsApp.backgroundColor,
@@ -132,15 +131,15 @@ class _HistoryPageState extends State<HistoryPage> {
                 return  Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: HistoryCard(
-                  subject: item.ujian.namaUjian,
-                  grade: item.ujian.tingkat,
-                  teacher: item.ujian.jurusan,
+                  subject: item.pesertaUjian.ujian.namaUjian,
+                  grade: item.pesertaUjian.ujian.tingkat,
+                  teacher: item.pesertaUjian.ujian.jurusan,
                   imageUrl: 'assets/images/c1.jpg',
-                  status: item.statusUjian,
+                  status: item.pesertaUjian.statusUjian,
                   isExpanded: isExpanded,
-                  pilganScore: item.hasil?.nilaiAkhir,
+                  pilganScore: item.nilaiAkhir,
                   essayStatus: 'Tidak ada essay',
-                  finalScore: item.hasil?.nilaiAkhir.toStringAsFixed(2),
+                  finalScore: item.nilaiAkhir.toStringAsFixed(2),
                   onExpandToggle: () {
                     setState(() {
                       if (isExpanded) {

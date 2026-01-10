@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cbt_app/model/start_ujian_response_model.dart';
 import 'package:cbt_app/model/ujian_response_model.dart';
+import 'package:cbt_app/model/hasil_ujian_response_model.dart';
 import 'package:cbt_app/utlis/session_manager.dart';
 import 'package:cbt_app/utlis/url.dart';
 import 'package:http/http.dart' as http;
@@ -15,7 +16,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians');
+      final url = Uri.parse('${Url.emuUrl}/siswa/ujians');
 
     try {
       final response = await http
@@ -54,6 +55,52 @@ class UjianService {
     }
   }
 
+    // Get Hasil Ujian - daftar hasil ujian milik siswa saat ini
+    Future<HasilUjianListResponse> getHasilUjianSiswa() async {
+      final token = await SessionManager.getToken();
+
+      if (token == null) {
+        throw Exception('Token tidak ditemukan. Silakan login kembali.');
+      }
+
+      final url = Uri.parse('${Url.emuUrl}/hasil-ujian/my-hasil');
+
+      try {
+        final response = await http
+            .get(
+              url,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+              },
+            )
+            .timeout(Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> bodyMap = jsonDecode(response.body);
+          return HasilUjianListResponse.fromJson(bodyMap);
+        } else if (response.statusCode == 401) {
+          throw Exception('Unauthorized. Silakan login kembali.');
+        } else if (response.statusCode == 404) {
+          throw Exception('Data hasil ujian tidak ditemukan.');
+        } else {
+          print('Get hasil ujian failed: ${response.statusCode}');
+          print('Response body: ${response.body}');
+          throw HttpException('Error: ${response.statusCode}');
+        }
+      } on TimeoutException catch (e) {
+        print('Request timed out: $e');
+        throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
+      } on SocketException catch (e) {
+        print('Socket exception: $e');
+        throw Exception(
+          'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+        );
+      } catch (e) {
+        print('Error getting hasil ujian: $e');
+        throw Exception('Terjadi kesalahan: $e');
+      }
+    }
   // Start Ujian - Mulai ujian dan get daftar soal
   Future<StartUjianResponseModel> startUjian(int pesertaUjianId) async {
     final token = await SessionManager.getToken();
@@ -62,7 +109,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/start');
+    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/start');
 
     try {
       final response = await http
@@ -118,7 +165,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/jawaban');
+    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/jawaban');
 
     try {
       final Map<String, dynamic> body = {
@@ -184,7 +231,7 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/finish');
+    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/finish');
 
     try {
       final response = await http

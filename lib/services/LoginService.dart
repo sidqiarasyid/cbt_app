@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:cbt_app/model/user_model.dart';
 
 class LoginService {
-  final url = Uri.parse('${Url.deviceUrl}/auth/login');
+  final url = Uri.parse('${Url.emuUrl}/auth/login');
 
   Future<UserModel> loginSiswa(String username, String password) async {
     final Map<String, dynamic> body = {
