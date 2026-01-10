@@ -28,12 +28,14 @@ class HasilEntry {
 
   factory HasilEntry.fromJson(Map<String, dynamic> json) {
     return HasilEntry(
-      hasilUjianId: json['hasil_ujian_id'] as int,
-      pesertaUjianId: json['peserta_ujian_id'] as int,
-      nilaiAkhir: (json['nilai_akhir'] as num).toDouble(),
-      tanggalSubmit: DateTime.parse(json['tanggal_submit'] as String),
+      hasilUjianId: json['hasil_ujian_id'] as int? ?? 0,
+      pesertaUjianId: json['peserta_ujian_id'] as int? ?? 0,
+      nilaiAkhir: (json['nilai_akhir'] as num?)?.toDouble() ?? 0.0,
+      tanggalSubmit: json['tanggal_submit'] != null
+          ? DateTime.parse(json['tanggal_submit'] as String)
+          : DateTime.now(),
       pesertaUjian: PesertaUjianHasil.fromJson(
-        json['pesertaUjian'] as Map<String, dynamic>,
+        (json['peserta_ujians'] as Map<String, dynamic>?) ?? {},
       ),
     );
   }
@@ -56,11 +58,13 @@ class PesertaUjianHasil {
 
   factory PesertaUjianHasil.fromJson(Map<String, dynamic> json) {
     return PesertaUjianHasil(
-      pesertaUjianId: json['peserta_ujian_id'] as int,
-      siswaId: json['siswa_id'] as int,
-      ujianId: json['ujian_id'] as int,
-      statusUjian: json['status_ujian'] as String,
-      ujian: UjianShort.fromJson(json['ujian'] as Map<String, dynamic>),
+      pesertaUjianId: json['peserta_ujian_id'] as int? ?? 0,
+      siswaId: json['siswa_id'] as int? ?? 0,
+      ujianId: json['ujian_id'] as int? ?? 0,
+      statusUjian: json['status_ujian'] as String? ?? '',
+      ujian: UjianShort.fromJson(
+        (json['ujians'] as Map<String, dynamic>?) ?? {},
+      ),
     );
   }
 }
@@ -86,13 +90,17 @@ class UjianShort {
 
   factory UjianShort.fromJson(Map<String, dynamic> json) {
     return UjianShort(
-      ujianId: json['ujian_id'] as int,
-      namaUjian: json['nama_ujian'] as String,
-      mataPelajaran: json['mata_pelajaran'] as String,
-      tingkat: json['tingkat'] as String,
-      jurusan: json['jurusan'] as String,
-      tanggalMulai: DateTime.parse(json['tanggal_mulai'] as String),
-      tanggalSelesai: DateTime.parse(json['tanggal_selesai'] as String),
+      ujianId: json['ujian_id'] as int? ?? 0,
+      namaUjian: json['nama_ujian'] as String? ?? '',
+      mataPelajaran: json['mata_pelajaran'] as String? ?? '',
+      tingkat: json['tingkat'] as String? ?? '',
+      jurusan: json['jurusan'] as String? ?? '',
+      tanggalMulai: json['tanggal_mulai'] != null
+          ? DateTime.parse(json['tanggal_mulai'] as String)
+          : DateTime.now(),
+      tanggalSelesai: json['tanggal_selesai'] != null
+          ? DateTime.parse(json['tanggal_selesai'] as String)
+          : DateTime.now(),
     );
   }
 }
