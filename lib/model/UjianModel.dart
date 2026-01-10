@@ -1,6 +1,7 @@
 import 'package:cbt_app/model/QuizModel.dart';
 
 class UjianModel {
+  int ujianId;
   String subject;
   String grade;
   String date;
@@ -17,6 +18,7 @@ class UjianModel {
   DateTime? tanggalSelesai; // Waktu deadline ujian dari server
 
   UjianModel({
+    required this.ujianId,
     required this.subject,
     required this.grade,
     required this.date,

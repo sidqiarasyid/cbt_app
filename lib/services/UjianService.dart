@@ -10,21 +10,23 @@ import 'package:http/http.dart' as http;
 class UjianService {
   Future<UjianResponseModel> getUjianSiswa() async {
     final token = await SessionManager.getToken();
-    
+
     if (token == null) {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians');
 
     try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
@@ -43,7 +45,9 @@ class UjianService {
       throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
     } on SocketException catch (e) {
       print('Socket exception: $e');
-      throw Exception('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+      throw Exception(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+      );
     } catch (e) {
       print('Error getting ujian: $e');
       throw Exception('Terjadi kesalahan: $e');
@@ -53,24 +57,24 @@ class UjianService {
   // Start Ujian - Mulai ujian dan get daftar soal
   Future<StartUjianResponseModel> startUjian(int pesertaUjianId) async {
     final token = await SessionManager.getToken();
-    
+
     if (token == null) {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/start');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/start');
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'peserta_ujian_id': pesertaUjianId,
-        }),
-      ).timeout(Duration(seconds: 15));
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'peserta_ujian_id': pesertaUjianId}),
+          )
+          .timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
@@ -91,7 +95,9 @@ class UjianService {
       throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
     } on SocketException catch (e) {
       print('Socket exception: $e');
-      throw Exception('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+      throw Exception(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+      );
     } catch (e) {
       print('Error starting ujian: $e');
       rethrow;
@@ -107,12 +113,12 @@ class UjianService {
     String? teksJawaban,
   }) async {
     final token = await SessionManager.getToken();
-    
+
     if (token == null) {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/jawaban');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/jawaban');
 
     try {
       final Map<String, dynamic> body = {
@@ -123,23 +129,25 @@ class UjianService {
       if (opsiJawabanId != null) {
         body['opsi_jawaban_id'] = opsiJawabanId;
       }
-      
+
       if (opsiJawabanIds != null && opsiJawabanIds.isNotEmpty) {
         body['opsi_jawaban_ids'] = opsiJawabanIds;
       }
-      
+
       if (teksJawaban != null) {
         body['teks_jawaban'] = teksJawaban;
       }
 
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(body),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('✅ Jawaban tersimpan: Soal $soalId');
@@ -159,7 +167,9 @@ class UjianService {
       throw Exception('Koneksi timeout. Jawaban mungkin belum tersimpan.');
     } on SocketException catch (e) {
       print('⚠️ Socket exception submit jawaban soal $soalId: $e');
-      throw Exception('Tidak dapat terhubung ke server. Jawaban akan disimpan lokal.');
+      throw Exception(
+        'Tidak dapat terhubung ke server. Jawaban akan disimpan lokal.',
+      );
     } catch (e) {
       print('⚠️ Error submit jawaban soal $soalId: $e');
       rethrow;
@@ -169,24 +179,24 @@ class UjianService {
   // Finish Ujian - Selesaikan ujian dan hitung nilai
   Future<Map<String, dynamic>> finishUjian(int pesertaUjianId) async {
     final token = await SessionManager.getToken();
-    
+
     if (token == null) {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/finish');
+    final url = Uri.parse('${Url.deviceUrl}/siswa/ujians/finish');
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'peserta_ujian_id': pesertaUjianId,
-        }),
-      ).timeout(Duration(seconds: 15));
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'peserta_ujian_id': pesertaUjianId}),
+          )
+          .timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
@@ -207,11 +217,12 @@ class UjianService {
       throw Exception('Koneksi timeout. Coba lagi.');
     } on SocketException catch (e) {
       print('Socket exception: $e');
-      throw Exception('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+      throw Exception(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+      );
     } catch (e) {
       print('Error finishing ujian: $e');
       rethrow;
     }
   }
 }
-

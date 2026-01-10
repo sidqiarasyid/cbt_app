@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:cbt_app/model/ujian_response_model.dart';
 import 'package:cbt_app/services/UjianService.dart';
 import 'package:cbt_app/style/style.dart';
@@ -142,7 +140,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   isExpanded: isExpanded,
                   pilganScore: item.hasil?.nilaiAkhir,
                   essayStatus: 'Tidak ada essay',
-                  finalScore: item.hasil?.nilaiAkhir.toString(),
+                  finalScore: item.hasil?.nilaiAkhir.toStringAsFixed(2),
                   onExpandToggle: () {
                     setState(() {
                       if (isExpanded) {
