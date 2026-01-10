@@ -6,7 +6,7 @@ class HistoryCard extends StatelessWidget {
   final String grade;
   final String teacher;
   final String imageUrl;
-  final String status; // 'selesai' or 'gagal'
+  final String status; 
   final bool isExpanded;
   final double? pilganScore;
   final String? essayStatus;
