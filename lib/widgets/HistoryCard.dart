@@ -29,7 +29,7 @@ class HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSelesai = status == 'DINILAI';
+    final isSelesai = status == 'DINILAI' || status == 'SELESAI';
     final statusColor = isSelesai
         ? ColorsApp.primaryColor
         : ColorsApp.pillStrokeColorRed;
