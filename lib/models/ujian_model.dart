@@ -1,4 +1,4 @@
-import 'package:cbt_app/model/QuizModel.dart';
+import 'package:cbt_app/models/quiz_model.dart';
 
 class UjianModel {
   int ujianId;

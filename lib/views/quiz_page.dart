@@ -1,16 +1,16 @@
 import 'dart:async';
-import 'package:cbt_app/model/QuizModel.dart';
-import 'package:cbt_app/model/UjianModel.dart';
-import 'package:cbt_app/pages/quiz_blocked_page.dart';
-import 'package:cbt_app/pages/quiz_essay_page.dart';
-import 'package:cbt_app/pages/quiz_picker.dart';
-import 'package:cbt_app/pages/quiz_pilgan_page.dart';
-import 'package:cbt_app/services/UjianService.dart';
+import 'package:cbt_app/models/quiz_model.dart';
+import 'package:cbt_app/models/ujian_model.dart';
+import 'package:cbt_app/views/quiz_blocked_page.dart';
+import 'package:cbt_app/views/quiz_essay_page.dart';
+import 'package:cbt_app/views/quiz_picker.dart';
+import 'package:cbt_app/views/quiz_pilgan_page.dart';
+import 'package:cbt_app/services/ujian_service.dart';
 import 'package:cbt_app/style/style.dart';
-import 'package:cbt_app/widgets/EndQuizDialog.dart';
-import 'package:cbt_app/widgets/FinishQuizDialog.dart';
-import 'package:cbt_app/widgets/UnansweredWarningDialog.dart';
-import 'package:cbt_app/widgets/UnansweredFinishWarningDialog.dart';
+import 'package:cbt_app/widgets/end_quiz_dialog.dart';
+import 'package:cbt_app/widgets/finish_quiz_dialog.dart';
+import 'package:cbt_app/widgets/unanswered_warning_dialog.dart';
+import 'package:cbt_app/widgets/unanswered_finish_warning_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

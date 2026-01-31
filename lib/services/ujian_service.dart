@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:cbt_app/model/start_ujian_response_model.dart';
-import 'package:cbt_app/model/ujian_response_model.dart';
-import 'package:cbt_app/model/hasil_ujian_response_model.dart';
-import 'package:cbt_app/utlis/session_manager.dart';
-import 'package:cbt_app/utlis/url.dart';
+import 'package:cbt_app/models/start_ujian_response_model.dart';
+import 'package:cbt_app/models/ujian_response_model.dart';
+import 'package:cbt_app/models/hasil_ujian_response_model.dart';
+import 'package:cbt_app/utils/session_manager.dart';
+import 'package:cbt_app/utils/url.dart';
 import 'package:http/http.dart' as http;
 
 class UjianService {

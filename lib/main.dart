@@ -1,14 +1,14 @@
-import 'package:cbt_app/pages/login_page.dart';
+import 'package:cbt_app/views/login_page.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
 // Import widgets
 import 'widgets/navbar.dart';
 
-// Import pages
-import 'pages/home_page.dart';
-import 'pages/history_page.dart';
-import 'pages/profile_page.dart';
+// Import views
+import 'views/home_page.dart';
+import 'views/history_page.dart';
+import 'views/profile_page.dart';
 
 void main() {
   runApp(const MyApp());

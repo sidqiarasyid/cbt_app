@@ -1,12 +1,14 @@
-import 'package:cbt_app/model/ujian_response_model.dart';
-import 'package:cbt_app/pages/quiz_blocked_page.dart';
-import 'package:cbt_app/pages/quiz_page.dart';
+import 'package:cbt_app/models/ujian_response_model.dart';
+import 'package:cbt_app/views/quiz_blocked_page.dart';
+import 'package:cbt_app/views/quiz_page.dart';
 import 'package:cbt_app/controllers/home_controller.dart';
-import 'package:cbt_app/widgets/StartDialog.dart';
+import 'package:cbt_app/widgets/start_dialog.dart';
 import 'package:cbt_app/widgets/home_header.dart';
 import 'package:cbt_app/widgets/exam_list_section.dart';
 import 'package:cbt_app/widgets/loading_state.dart';
 import 'package:cbt_app/widgets/error_state.dart';
+import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
+import 'package:cbt_app/utils/helpers.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -70,7 +72,7 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: ExamListSection(
                       ujianList: ujianList,
-                      formatDate: _controller.formatDate,
+                      formatDate: DateFormatter.formatDateFromString,
                       onStartExam: _handleStartExam,
                     ),
                   ),
@@ -109,7 +111,7 @@ class _HomePageState extends State<HomePage> {
     DateTime tanggalMulai,
   ) async {
     Navigator.pop(context); // Close dialog
-    _controller.showLoadingDialog(context);
+    showLoadingDialog(context, message: 'Memuat soal ujian...');
 
     try {
       final ujianModel = await _controller.startUjian(
@@ -140,7 +142,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (!context.mounted) return;
       Navigator.pop(context); // Close loading
-      _controller.showErrorDialog(context, e.toString());
+      showErrorDialog(context, e.toString());
     }
   }
 }

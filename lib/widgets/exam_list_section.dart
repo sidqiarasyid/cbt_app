@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cbt_app/model/ujian_response_model.dart';
-import 'package:cbt_app/widgets/ExamCard.dart';
+import 'package:cbt_app/models/ujian_response_model.dart';
+import 'package:cbt_app/widgets/exam_card.dart';
 
 class ExamListSection extends StatelessWidget {
   final List<PesertaUjian> ujianList;
@@ -76,7 +76,7 @@ class ExamListSection extends StatelessWidget {
           child: ujianList.isEmpty
               ? SingleChildScrollView(
                   physics: AlwaysScrollableScrollPhysics(),
-                  child: Container(
+                  child: SizedBox(
                     height: MediaQuery.of(context).size.height * 0.6,
                     child: Center(
                       child: Column(

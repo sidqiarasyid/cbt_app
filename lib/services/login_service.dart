@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:cbt_app/utlis/url.dart';
+import 'package:cbt_app/utils/url.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:cbt_app/model/user_model.dart';
+import 'package:cbt_app/models/user_model.dart';
 
 class LoginService {
-  final url = Uri.parse('${Url.emuUrl}/auth/login');
-
   Future<UserModel> loginSiswa(String username, String password) async {
+    final url = Uri.parse('${Url.emuUrl}/auth/login');
     final Map<String, dynamic> body = {
       "username": username,
       "password": password,

@@ -1,11 +1,11 @@
 
-import 'package:cbt_app/model/QuizModel.dart';
-import 'package:cbt_app/model/UjianModel.dart';
+import 'package:cbt_app/models/quiz_model.dart';
+import 'package:cbt_app/models/ujian_model.dart';
 import 'package:cbt_app/style/style.dart';
-import 'package:cbt_app/widgets/PickerItem.dart';
-import 'package:cbt_app/widgets/FinishQuizDialog.dart';
-import 'package:cbt_app/widgets/UnansweredWarningDialog.dart';
-import 'package:cbt_app/widgets/EndQuizDialog.dart';
+import 'package:cbt_app/widgets/picker_item.dart';
+import 'package:cbt_app/widgets/finish_quiz_dialog.dart';
+import 'package:cbt_app/widgets/unanswered_warning_dialog.dart';
+import 'package:cbt_app/widgets/end_quiz_dialog.dart';
 import 'package:flutter/material.dart';
 
 class QuizPicker extends StatefulWidget {

@@ -1,5 +1,5 @@
-import 'package:cbt_app/model/user_model.dart';
-import 'package:cbt_app/services/LoginService.dart';
+import 'package:cbt_app/models/user_model.dart';
+import 'package:cbt_app/services/login_service.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +17,7 @@ class _LoginpageState extends State<Loginpage> {
   final TextEditingController passController = TextEditingController();
   bool isPasswordVisible = false;
   bool isLoading = false;
-  LoginService loginService = new LoginService(); 
+  LoginService loginService = LoginService(); 
   
 
   Future<void> login() async{

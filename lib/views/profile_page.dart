@@ -1,12 +1,12 @@
 import 'dart:convert';
-import 'package:cbt_app/pages/login_page.dart';
+import 'package:cbt_app/views/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../style/style.dart';
-import '../utlis/session_manager.dart';
-import '../services/ProfileService.dart';
+import '../utils/session_manager.dart';
+import '../services/profile_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

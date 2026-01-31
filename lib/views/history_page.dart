@@ -1,7 +1,7 @@
-import 'package:cbt_app/model/hasil_ujian_response_model.dart';
-import 'package:cbt_app/services/UjianService.dart';
+import 'package:cbt_app/models/hasil_ujian_response_model.dart';
+import 'package:cbt_app/services/ujian_service.dart';
 import 'package:cbt_app/style/style.dart';
-import 'package:cbt_app/widgets/HistoryCard.dart';
+import 'package:cbt_app/widgets/history_card.dart';
 import 'package:flutter/material.dart';
 
 class HistoryPage extends StatefulWidget {

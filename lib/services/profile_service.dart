@@ -1,24 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:cbt_app/utlis/url.dart';
+import 'package:cbt_app/utils/url.dart';
 import 'package:http/http.dart' as http;
-import 'package:cbt_app/utlis/session_manager.dart';
-import 'package:cbt_app/model/user_model.dart';
+import 'package:cbt_app/utils/session_manager.dart';
+import 'package:cbt_app/models/user_model.dart';
 
 class ProfileService {
-  // Fetch current user profile from server
-  // NOTE: change endpoint if your backend uses a different path (e.g. /auth/me)
-  final Uri _meUrl = Uri.parse('${Url.emuUrl}/auth/me');
-  // NOTE: change endpoint for update to match your backend
-  final Uri _updateUrl = Uri.parse('${Url.emuUrl}/profile');
-
   Future<UserModel> fetchProfile() async {
+    final Uri meUrl = Uri.parse('${Url.emuUrl}/auth/me');
     final String? token = await SessionManager.getToken();
     if (token == null) throw Exception('Not authenticated');
 
     final response = await http
         .get(
-          _meUrl,
+          meUrl,
           headers: {
             HttpHeaders.contentTypeHeader: 'application/json',
             HttpHeaders.authorizationHeader: 'Bearer $token',
@@ -45,6 +40,7 @@ class ProfileService {
     String? jurusan,
     String? tingkat,
   }) async {
+    final Uri updateUrl = Uri.parse('${Url.emuUrl}/profile');
     final String? token = await SessionManager.getToken();
     if (token == null) throw Exception('Not authenticated');
 
@@ -58,7 +54,7 @@ class ProfileService {
 
     final response = await http
         .patch(
-          _updateUrl,
+          updateUrl,
           headers: {
             HttpHeaders.contentTypeHeader: 'application/json',
             HttpHeaders.authorizationHeader: 'Bearer $token',

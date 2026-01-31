@@ -1,4 +1,4 @@
-import 'package:cbt_app/model/start_ujian_response_model.dart';
+import 'package:cbt_app/models/start_ujian_response_model.dart';
 
 class QuizModel {
   final int soalId;

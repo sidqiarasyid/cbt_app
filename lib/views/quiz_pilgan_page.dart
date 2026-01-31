@@ -151,7 +151,7 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
               style: TextStyle(fontWeight: FontWeight.w600, color: ColorsApp.primaryColor),),
             ),
             SizedBox(height: 5,),
-            Container(
+            SizedBox(
               height: MediaQuery.of(context).size.height * 0.5,
               child: widget.answerList.isEmpty 
                 ? Center(

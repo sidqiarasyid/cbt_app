@@ -2,7 +2,7 @@ import 'package:cbt_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:cbt_app/style/style.dart';
 
-import 'package:cbt_app/model/UjianModel.dart';
+import 'package:cbt_app/models/ujian_model.dart';
 
 class QuizEndPage extends StatelessWidget {
   final UjianModel ujian;
