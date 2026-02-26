@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:cbt_app/models/quiz_model.dart';
-import 'package:cbt_app/models/ujian_model.dart';
+import 'package:cbt_app/models/exam_model.dart';
 import 'package:cbt_app/views/quiz_blocked_page.dart';
+import 'package:cbt_app/views/quiz_end_page.dart';
 import 'package:cbt_app/views/quiz_essay_page.dart';
 import 'package:cbt_app/views/quiz_picker.dart';
-import 'package:cbt_app/views/quiz_pilgan_page.dart';
-import 'package:cbt_app/services/ujian_service.dart';
+import 'package:cbt_app/views/quiz_multiple_choice_page.dart';
+import 'package:cbt_app/services/exam_service.dart';
 import 'package:cbt_app/style/style.dart';
+import 'package:cbt_app/widgets/dialogs/exit_all_answered_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
 import 'package:cbt_app/widgets/end_quiz_dialog.dart';
 import 'package:cbt_app/widgets/finish_quiz_dialog.dart';
 import 'package:cbt_app/widgets/unanswered_warning_dialog.dart';
@@ -16,8 +19,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 
 class QuizPage extends StatefulWidget {
-  final UjianModel ujian;
-  const QuizPage({super.key, required this.ujian});
+  final ExamModel exam;
+  const QuizPage({super.key, required this.exam});
 
   @override
   State<QuizPage> createState() => _QuizPageState();
@@ -30,21 +33,21 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   TextEditingController essayController = TextEditingController();
   Timer? _countdownTimer;
   Duration _remainingTime = Duration.zero;
-  final UjianService _ujianService = UjianService();
-  DateTime? exitTime;
-  Duration? exitDuration;
-  
+  final ExamService _examService = ExamService();
+  bool _isBlocked = false;
+  Timer? _inactiveTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Debug check
-    if (widget.ujian.quizList.isEmpty) {
-      print('❌ ERROR: quizList is empty!');
+    if (widget.exam.quizList.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Tidak ada soal tersedia untuk ujian ini'),
             backgroundColor: Colors.red,
@@ -54,52 +57,99 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
       return;
     }
     
-    print('✅ QuizList loaded: ${widget.ujian.quizList.length} soal');
     loadCurrentQuestion();
     _initializeTimer();
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state)  { 
-    if(state == AppLifecycleState.paused || state == AppLifecycleState.inactive){
-      exitTime = DateTime.now();
-    } else if(state == AppLifecycleState.resumed){
-      if(exitTime != null){
-        exitDuration = DateTime.now().difference(exitTime!);
-        if(exitDuration!.inSeconds > 10){
-          //hit block API
-          if(mounted){
-            print("DEBUG: Duration > 5s. Attempting navigation...");
-            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => QuizBlockedPage(),), (route)=> false);
-          }
-        }
-        exitTime = null;
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_isBlocked) {
+      // Already blocked — if user returns to app, navigate to blocked page
+      if (state == AppLifecycleState.resumed) {
+        _inactiveTimer?.cancel();
+        _navigateToBlockedPage();
       }
+      return;
+    }
+
+    if (state == AppLifecycleState.paused) {
+      // User left the app (backgrounded, switched apps)
+      _inactiveTimer?.cancel();
+      _blockExam('APP_BACKGROUNDED');
+    } else if (state == AppLifecycleState.inactive) {
+      // Overlay detected (notification shade, split screen, PiP, etc.)
+      // Use a short debounce: normal backgrounding goes inactive→paused in ~100ms,
+      // but overlays stay in inactive state. 300ms filters out transient transitions.
+      _inactiveTimer?.cancel();
+      _inactiveTimer = Timer(const Duration(milliseconds: 300), () {
+        if (!_isBlocked && mounted) {
+          _blockExam('OVERLAY_DETECTED');
+        }
+      });
+    } else if (state == AppLifecycleState.resumed) {
+      // User returned — cancel any pending overlay block timer
+      _inactiveTimer?.cancel();
     }
   }
 
+  Future<void> _blockExam(String violationType) async {
+    _isBlocked = true;
+    _countdownTimer?.cancel();
+
+    // 1. Persist block locally (works offline)
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("blockKey ${widget.exam.examId}", true);
+
+    // 2. Report violation to backend (fire-and-forget)
+    _examService.reportViolation(
+      examParticipantId: widget.exam.examParticipantId,
+      violationType: violationType,
+    );
+
+    // 3. Navigate to blocked page when app resumes
+    // If already resumed (inactive → resumed happens quickly), navigate now
+    if (mounted) {
+      _navigateToBlockedPage();
+    }
+  }
+
+  void _navigateToBlockedPage() {
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QuizBlockedPage(
+          examName: widget.exam.subject,
+          violationTime: DateTime.now(),
+        ),
+      ),
+      (route) => false,
+    );
+  }
+
   void _initializeTimer() {
-    // Gunakan tanggalSelesai dari server jika tersedia
-    DateTime? endTime;
-    
-    if (widget.ujian.tanggalSelesai != null) {
-      // Gunakan waktu selesai ujian dari server (lebih akurat)
-      endTime = widget.ujian.tanggalSelesai;
-    } else if (widget.ujian.waktuMulai != null && widget.ujian.durasiMenit > 0) {
-      // Fallback: kalkulasi dari waktu mulai + durasi
-      endTime = widget.ujian.waktuMulai!.add(Duration(minutes: widget.ujian.durasiMenit));
+    // Use per-student remaining_seconds from backend (accounts for individual start time + duration).
+    // Falls back to global exam end_date only if remainingSeconds is not available.
+    final int? remainingSec = widget.exam.remainingSeconds;
+    final DateTime? endTime = widget.exam.endDate;
+
+    Duration remaining;
+
+    if (remainingSec != null && remainingSec > 0) {
+      remaining = Duration(seconds: remainingSec);
+    } else if (endTime != null) {
+      remaining = endTime.difference(DateTime.now());
+    } else {
+      // No timer info available — default to 60 min safety net
+      remaining = Duration(minutes: 60);
     }
     
-    if (endTime != null) {
-      final Duration remaining = endTime.difference(DateTime.now());
-      
-      if (remaining.isNegative) {
-        _remainingTime = Duration.zero;
-        _autoFinishUjian();
-      } else {
-        _remainingTime = remaining;
-        _startCountdown();
-      }
+    if (remaining.isNegative || remaining.inSeconds <= 0) {
+      _remainingTime = Duration.zero;
+      _autoFinishUjian();
+    } else {
+      _remainingTime = remaining;
+      _startCountdown();
     }
   }
 
@@ -116,41 +166,65 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     });
   }
 
-  void _autoFinishUjian() async {
+  void _autoFinishUjian({int retryCount = 0}) async {
+    const maxRetries = 3;
     try {
-      await _ujianService.finishUjian(widget.ujian.pesertaUjianId);
+      await _examService.finishExam(widget.exam.examParticipantId);
       if (!mounted) return;
       
+      // Capture messenger before navigation pops the page
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).popUntil((route) => route.isFirst);
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Waktu ujian habis. Ujian telah selesai.'), backgroundColor: Colors.red),
       );
     } catch (e) {
-      print('Error auto finish ujian: $e');
+      debugPrint('[AutoFinish] Failed (attempt ${retryCount + 1}): $e');
+      if (retryCount < maxRetries) {
+        // Retry with exponential backoff
+        await Future.delayed(Duration(seconds: 2 * (retryCount + 1)));
+        if (mounted) _autoFinishUjian(retryCount: retryCount + 1);
+      } else {
+        // All retries exhausted — notify user
+        if (!mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Waktu habis. Gagal mengirim ujian otomatis, hubungi pengawas.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 
   String _formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes);
+    final hours = duration.inHours;
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
+    if (hours > 0) {
+      return '${twoDigits(hours)}:$minutes:$seconds';
+    }
     return '$minutes:$seconds';
   }
 
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _inactiveTimer?.cancel();
     essayController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   void loadCurrentQuestion() {
-    final qList = widget.ujian.quizList;
+    final qList = widget.exam.quizList;
     
     // Validasi index
     if (qList.isEmpty || currentQuestion < 0 || currentQuestion >= qList.length) {
-      print('❌ Invalid currentQuestion index: $currentQuestion, list length: ${qList.length}');
       return;
     }
     
@@ -159,17 +233,16 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     if (qList[currentQuestion].quizType == "ESSAY") {
       essayController.text = qList[currentQuestion].answerEssay ?? '';
     } else {
-      // Convert opsiJawaban to String list for QuizPilganPage
-      answer = qList[currentQuestion].opsiJawaban?.map((opsi) => opsi.teksOpsi).toList() ?? [];
+      // Convert answerOptions to String list for QuizPilganPage
+      answer = qList[currentQuestion].answerOptions?.map((option) => option.optionText).toList() ?? [];
     }
   }
 
   Future<void> _submitAnswer() async {
-    final qList = widget.ujian.quizList;
+    final qList = widget.exam.quizList;
     
     // Validasi index
     if (qList.isEmpty || currentQuestion < 0 || currentQuestion >= qList.length) {
-      print('❌ Cannot submit: Invalid question index');
       return;
     }
     
@@ -178,109 +251,99 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     try {
       if (quiz.quizType == "ESSAY") {
         // Essay answer - submit even if empty to allow deletion
-        await _ujianService.submitJawaban(
-          pesertaUjianId: widget.ujian.pesertaUjianId,
-          soalId: quiz.soalId,
-          teksJawaban: essayController.text.trim().isEmpty ? null : essayController.text.trim(),
+        await _examService.submitAnswer(
+          examParticipantId: widget.exam.examParticipantId,
+          questionId: quiz.questionId,
+          answerText: essayController.text.trim().isEmpty ? null : essayController.text.trim(),
         );
         setState(() {
           quiz.answerEssay = essayController.text.trim().isEmpty ? null : essayController.text.trim();
           quiz.isSaved = essayController.text.trim().isNotEmpty;
         });
         if (essayController.text.trim().isEmpty) {
-          print('🗑️ Essay answer deleted for soal ${quiz.soalId}');
         } else {
-          print('✅ Essay answer submitted for soal ${quiz.soalId}');
         }
-      } else if (quiz.quizType == "PILIHAN_GANDA_SINGLE") {
-        if (quiz.selectedAnswerIndex != null && quiz.opsiJawaban != null) {
+      } else if (quiz.quizType == "SINGLE_CHOICE") {
+        if (quiz.selectedAnswerIndex != null && quiz.answerOptions != null) {
           // Submit selected answer
-          final opsiId = quiz.opsiJawaban![quiz.selectedAnswerIndex!].opsiId;
-          await _ujianService.submitJawaban(
-            pesertaUjianId: widget.ujian.pesertaUjianId,
-            soalId: quiz.soalId,
-            opsiJawabanId: opsiId,
+          final optionId = quiz.answerOptions![quiz.selectedAnswerIndex!].optionId;
+          await _examService.submitAnswer(
+            examParticipantId: widget.exam.examParticipantId,
+            questionId: quiz.questionId,
+            answerOptionId: optionId,
           );
           setState(() {
             quiz.isSaved = true;
           });
-          print('✅ Single choice answer submitted: opsi $opsiId');
         } else {
           // No selection - delete existing answer
-          await _ujianService.submitJawaban(
-            pesertaUjianId: widget.ujian.pesertaUjianId,
-            soalId: quiz.soalId,
-            opsiJawabanId: null,
+          await _examService.submitAnswer(
+            examParticipantId: widget.exam.examParticipantId,
+            questionId: quiz.questionId,
+            answerOptionId: null,
           );
           setState(() {
             quiz.isSaved = false;
           });
-          print('🗑️ Single choice answer deleted for soal ${quiz.soalId}');
         }
-      } else if (quiz.quizType == "PILIHAN_GANDA_MULTIPLE") {
+      } else if (quiz.quizType == "MULTIPLE_CHOICE") {
         if (quiz.selectedAnswerIndices != null && 
             quiz.selectedAnswerIndices!.isNotEmpty && 
-            quiz.opsiJawaban != null) {
+            quiz.answerOptions != null) {
           // Submit selected answers
-          final opsiIds = quiz.selectedAnswerIndices!
-              .map((index) => quiz.opsiJawaban![index].opsiId)
+          final optionIds = quiz.selectedAnswerIndices!
+              .map((index) => quiz.answerOptions![index].optionId)
               .toList();
-          await _ujianService.submitJawaban(
-            pesertaUjianId: widget.ujian.pesertaUjianId,
-            soalId: quiz.soalId,
-            opsiJawabanIds: opsiIds,
+          await _examService.submitAnswer(
+            examParticipantId: widget.exam.examParticipantId,
+            questionId: quiz.questionId,
+            answerOptionIds: optionIds,
           );
           setState(() {
             quiz.isSaved = true;
           });
-          print('✅ Multiple choice answer submitted: $opsiIds');
         } else {
           // No selection - delete existing answer
-          await _ujianService.submitJawaban(
-            pesertaUjianId: widget.ujian.pesertaUjianId,
-            soalId: quiz.soalId,
-            opsiJawabanIds: [],
+          await _examService.submitAnswer(
+            examParticipantId: widget.exam.examParticipantId,
+            questionId: quiz.questionId,
+            answerOptionIds: [],
           );
           setState(() {
             quiz.isSaved = false;
           });
-          print('🗑️ Multiple choice answer deleted for soal ${quiz.soalId}');
         }
       }
     } catch (e) {
-      print('❌ Error submitting answer: $e');
-      // Don't show error to user, just log it
+      debugPrint('[SubmitAnswer] Failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Jawaban gagal disimpan. Coba lagi.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
   void _onAnswerSelected(int? selectedIndex, {List<int>? selectedIndices}) {
-    final qList = widget.ujian.quizList;
+    final qList = widget.exam.quizList;
     
     // Validasi index
     if (qList.isEmpty || currentQuestion < 0 || currentQuestion >= qList.length) {
-      print('❌ Cannot select answer: Invalid question index');
       return;
     }
     
     final quiz = qList[currentQuestion];
     
-    print('🎯 _onAnswerSelected called:');
-    print('   Soal ID: ${quiz.soalId}');
-    print('   Type: ${quiz.quizType}');
-    print('   Selected Index: $selectedIndex');
-    print('   Selected Indices: $selectedIndices');
     
     setState(() {
-      if (quiz.quizType == "PILIHAN_GANDA_SINGLE") {
-        // Update even if null (for unselect)
-        final oldValue = quiz.selectedAnswerIndex;
+      if (quiz.quizType == "SINGLE_CHOICE") {
         quiz.selectedAnswerIndex = selectedIndex;
-        print('   📝 Updated single choice: $oldValue → $selectedIndex');
-      } else if (quiz.quizType == "PILIHAN_GANDA_MULTIPLE") {
-        // Update even if null or empty (for unselect)
-        final oldValue = quiz.selectedAnswerIndices;
+      } else if (quiz.quizType == "MULTIPLE_CHOICE") {
         quiz.selectedAnswerIndices = selectedIndices;
-        print('   📝 Updated multiple choice: $oldValue → $selectedIndices');
       }
     });
     
@@ -289,7 +352,11 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   }
 
   void nextQuestion() {
-    List<QuizModel> qList = widget.ujian.quizList;
+    List<QuizModel> qList = widget.exam.quizList;
+    // Flush pending essay debounce before navigating
+    if (qList[currentQuestion].quizType == "ESSAY") {
+      _submitAnswer();
+    }
     qList[currentQuestion].isFinished = true;
     if (currentQuestion + 1 >= qList.length) {
       _showFinishConfirmation();
@@ -303,6 +370,11 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
 
   void previousQuestion() {
     if (currentQuestion > 0) {
+      // Flush pending essay debounce before navigating
+      List<QuizModel> qList = widget.exam.quizList;
+      if (qList[currentQuestion].quizType == "ESSAY") {
+        _submitAnswer();
+      }
       currentQuestion--;
       setState(() {
         loadCurrentQuestion();
@@ -311,147 +383,71 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   }
 
   void _showExitConfirmation() {
-    List<QuizModel> qList = widget.ujian.quizList;
+    // F3: Flush pending essay debounce before showing exit dialog
+    List<QuizModel> qList = widget.exam.quizList;
+    if (qList[currentQuestion].quizType == "ESSAY") {
+      _submitAnswer();
+    }
     int answeredCount = qList.where((q) => q.hasAnswer).length;
     int totalCount = qList.length;
     int unansweredCount = totalCount - answeredCount;
     
     if (unansweredCount == 0) {
-      // All answered - show different message
+      // All answered — show exit dialog with finish/exit/cancel options
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0.0,
-          insetPadding: EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
-            ),
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: ColorsApp.secondaryColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.help_outline, size: 50, color: Colors.blue),
-                  SizedBox(height: 10),
-                  Text(
-                    "Keluar Ujian?",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Semua soal telah dijawab.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "Apakah anda ingin:",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  // Finish Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        _showFinishConfirmation();
-                      },
-                      child: Text(
-                        "Selesaikan Ujian",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  // Exit without finish button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context); // Close first dialog
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => EndQuizDialog(
-                            onYesPressed: () {
-                              Navigator.pop(context); // Close dialog
-                              Navigator.pop(context); // Exit quiz
-                            },
-                            onNoPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
-                        );
-                      },
-                      child: Text(
-                        "Keluar Tanpa Menyelesaikan",
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  // Cancel button
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        "Batal",
-                        style: TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  ),
-                ],
+        builder: (context) => ExitAllAnsweredDialog(
+          onFinish: () => _showFinishConfirmation(),
+          onExitWithoutFinish: () {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => EndQuizDialog(
+                onYesPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(this.context);
+                },
+                onNoPressed: () {
+                  Navigator.pop(context);
+                },
               ),
-            ),
-          ),
+            );
+          },
         ),
       );
     } else {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => UnansweredWarningDialog(
+        builder: (dialogContext) => UnansweredWarningDialog(
           unansweredCount: unansweredCount,
           onContinue: () async{
-            String blockKey = "blockKey ${widget.ujian.ujianId.toString()}";
-            SharedPreferences myPref = await SharedPreferences.getInstance();
-            myPref.setBool(blockKey, true);
-            Navigator.pop(context); 
-            Navigator.pop(context);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool("blockKey ${widget.exam.examId}", true);
+            
+            // Report to backend
+            _examService.reportViolation(
+              examParticipantId: widget.exam.examParticipantId,
+              violationType: 'EXAM_EXITED',
+            );
+            
+            if (!dialogContext.mounted) return;
+            Navigator.pop(dialogContext); 
+            if (!mounted) return;
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QuizBlockedPage(
+                  examName: widget.exam.subject,
+                  violationTime: DateTime.now(),
+                ),
+              ),
+              (route) => false,
+            );
           },
           onBack: () {
-            Navigator.pop(context);
+            Navigator.pop(dialogContext);
           },
         ),
       );
@@ -459,7 +455,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   }
 
   void _showFinishConfirmation() {
-    List<QuizModel> qList = widget.ujian.quizList;
+    List<QuizModel> qList = widget.exam.quizList;
     int answeredCount = qList.where((q) => q.hasAnswer).length;
     int totalCount = qList.length;
     int unansweredCount = totalCount - answeredCount;
@@ -502,45 +498,35 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   }
 
   Future<void> _finishQuiz() async {
-    // Show loading
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(child: CircularProgressIndicator()),
+    // Show loading with green gradient (submit theme)
+    showLoadingDialog(
+      context,
+      message: 'Mengirim jawaban...',
+      gradientColors: const [Color(0xFF4CAF50), Color(0xFF2E7D32)],
     );
     
     try {
-      final result = await _ujianService.finishUjian(widget.ujian.pesertaUjianId);
+      await _examService.finishExam(widget.exam.examParticipantId);
       
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-      Navigator.pop(context); // Exit quiz page
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ujian berhasil diselesaikan!'),
-          backgroundColor: Colors.green,
+      // Navigate to exam completion page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QuizEndPage(
+            exam: widget.exam,
+            submittedAt: DateTime.now(),
+          ),
         ),
       );
       
-      print('✅ Ujian finished with result: $result');
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading
       
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Error'),
-          content: Text('Gagal menyelesaikan ujian: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
+      showErrorDialog(context, 'Gagal menyelesaikan ujian. Silakan coba lagi.');
     }
   }
 
@@ -549,25 +535,28 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     List<QuizModel> qList,
     int curItem,
   ) async {
+    final parentContext = this.context;
     int? res;
     res = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => QuizPicker(
+        builder: (pickerContext) => QuizPicker(
           quizList: qList, 
           currItem: curItem,
-          ujian: widget.ujian,
+          exam: widget.exam,
           onFinishQuiz: () async {
             // Close picker
-            Navigator.pop(context);
+            Navigator.pop(pickerContext);
             // Finish quiz
+            if (!mounted) return;
             await _finishQuiz();
           },
           onExitQuiz: () {
             // Close picker
-            Navigator.pop(context);
+            Navigator.pop(pickerContext);
             // Exit quiz page without finishing
-            Navigator.pop(context);
+            if (!mounted) return;
+            Navigator.pop(parentContext);
           },
         ),
       ),
@@ -584,7 +573,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   @override
   Widget build(BuildContext context) {
     // Safety check
-    if (widget.ujian.quizList.isEmpty) {
+    if (widget.exam.quizList.isEmpty) {
       return Scaffold(
         body: Center(
           child: Text('Tidak ada soal tersedia'),
@@ -593,8 +582,8 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     }
     
     // Ensure currentQuestion is valid
-    if (currentQuestion >= widget.ujian.quizList.length) {
-      currentQuestion = widget.ujian.quizList.length - 1;
+    if (currentQuestion >= widget.exam.quizList.length) {
+      currentQuestion = widget.exam.quizList.length - 1;
     }
     if (currentQuestion < 0) {
       currentQuestion = 0;
@@ -620,7 +609,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                         iconSize: 30,
                       ),
                       Text(
-                        "Soal ${currentQuestion + 1}",
+                        "Question ${currentQuestion + 1}",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -631,7 +620,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                   Row(
                     children: [
                       Container(
-                        width: 80,
+                        constraints: BoxConstraints(minWidth: 80),
                         alignment: Alignment.center,
                         padding: EdgeInsets.symmetric(
                           horizontal: 12,
@@ -657,7 +646,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                         onPressed: () {
                           navigatePicker(
                             context,
-                            widget.ujian.quizList,
+                            widget.exam.quizList,
                             currentQuestion,
                           );
                         },
@@ -672,9 +661,8 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    widget.ujian.quizList[currentQuestion].quizType == "ESSAY" 
-                      ? QuizEssayPage(
-                          question: ques, 
+                    widget.exam.quizList[currentQuestion].quizType == "ESSAY" 
+                      ? QuizEssayPage(                          key: ValueKey('essay_${widget.exam.quizList[currentQuestion].questionId}_$currentQuestion'),                          question: ques, 
                           controller: essayController,
                           onChanged: () {
                             // Auto-save essay after debounce
@@ -682,12 +670,12 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                           },
                         ) 
                       : QuizPilganPage(
-                          key: ValueKey('soal_${widget.ujian.quizList[currentQuestion].soalId}_$currentQuestion'),
+                          key: ValueKey('soal_${widget.exam.quizList[currentQuestion].questionId}_$currentQuestion'),
                           question: ques, 
                           answerList: answer,
-                          initialSelectedIndex: widget.ujian.quizList[currentQuestion].selectedAnswerIndex,
-                          initialSelectedIndices: widget.ujian.quizList[currentQuestion].selectedAnswerIndices,
-                          isMultipleChoice: widget.ujian.quizList[currentQuestion].quizType == "PILIHAN_GANDA_MULTIPLE",
+                          initialSelectedIndex: widget.exam.quizList[currentQuestion].selectedAnswerIndex,
+                          initialSelectedIndices: widget.exam.quizList[currentQuestion].selectedAnswerIndices,
+                          isMultipleChoice: widget.exam.quizList[currentQuestion].quizType == "MULTIPLE_CHOICE",
                           onAnswerSelected: (selectedIndex, {selectedIndices}) {
                             _onAnswerSelected(selectedIndex, selectedIndices: selectedIndices);
                           },
@@ -743,7 +731,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  backgroundColor: currentQuestion + 1 >= widget.ujian.quizList.length 
+                                  backgroundColor: currentQuestion + 1 >= widget.exam.quizList.length 
                                     ? Colors.green 
                                     : ColorsApp.primaryColor,
                                   padding: EdgeInsets.symmetric(horizontal: 8),
@@ -755,7 +743,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        currentQuestion + 1 >= widget.ujian.quizList.length 
+                                        currentQuestion + 1 >= widget.exam.quizList.length 
                                           ? "Selesaikan Ujian" 
                                           : "Selanjutnya",
                                         style: TextStyle(
@@ -767,7 +755,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                                     ),
                                     SizedBox(width: 6),
                                     Icon(
-                                      currentQuestion + 1 >= widget.ujian.quizList.length 
+                                      currentQuestion + 1 >= widget.exam.quizList.length 
                                         ? Icons.check_circle 
                                         : Icons.arrow_forward, 
                                       color: ColorsApp.secondaryColor,

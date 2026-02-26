@@ -1,22 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:cbt_app/models/start_ujian_response_model.dart';
-import 'package:cbt_app/models/ujian_response_model.dart';
-import 'package:cbt_app/models/hasil_ujian_response_model.dart';
+import 'package:cbt_app/models/start_exam_response_model.dart';
+import 'package:cbt_app/models/exam_response_model.dart';
+import 'package:cbt_app/models/exam_result_response_model.dart';
 import 'package:cbt_app/utils/session_manager.dart';
 import 'package:cbt_app/utils/url.dart';
 import 'package:http/http.dart' as http;
 
-class UjianService {
-  Future<UjianResponseModel> getUjianSiswa() async {
+class ExamService {
+  Future<ExamResponseModel> getStudentExams() async {
     final token = await SessionManager.getToken();
 
     if (token == null) {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-      final url = Uri.parse('${Url.emuUrl}/siswa/ujians');
+      final url = Uri.parse('${Url.emuUrl}/students/exams');
 
     try {
       final response = await http
@@ -31,39 +31,34 @@ class UjianService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        return UjianResponseModel.fromJson(bodyMap);
+        return ExamResponseModel.fromJson(bodyMap);
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Silakan login kembali.');
       } else if (response.statusCode == 404) {
-        throw Exception('Data ujian tidak ditemukan.');
+        throw Exception('Exam data not found.');
       } else {
-        print('Get ujian failed: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        throw HttpException('Error: ${response.statusCode}');
+        throw HttpException('Terjadi kesalahan pada server.');
       }
-    } on TimeoutException catch (e) {
-      print('Request timed out: $e');
+    } on TimeoutException {
       throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
-    } on SocketException catch (e) {
-      print('Socket exception: $e');
+    } on SocketException {
       throw Exception(
         'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
       );
     } catch (e) {
-      print('Error getting ujian: $e');
-      throw Exception('Terjadi kesalahan: $e');
+      rethrow;
     }
   }
 
-    // Get Hasil Ujian - daftar hasil ujian milik siswa saat ini
-    Future<HasilUjianListResponse> getHasilUjianSiswa() async {
+    // Get Exam Results - list of exam results for current student
+    Future<ExamResultListResponse> getStudentExamResults() async {
       final token = await SessionManager.getToken();
 
       if (token == null) {
         throw Exception('Token tidak ditemukan. Silakan login kembali.');
       }
 
-      final url = Uri.parse('${Url.emuUrl}/hasil-ujian/my-hasil');
+      final url = Uri.parse('${Url.emuUrl}/exam-results/my-results');
 
       try {
         final response = await http
@@ -78,38 +73,33 @@ class UjianService {
 
         if (response.statusCode == 200) {
           final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-          return HasilUjianListResponse.fromJson(bodyMap);
+          return ExamResultListResponse.fromJson(bodyMap);
         } else if (response.statusCode == 401) {
           throw Exception('Unauthorized. Silakan login kembali.');
         } else if (response.statusCode == 404) {
-          throw Exception('Data hasil ujian tidak ditemukan.');
+          throw Exception('Exam results data not found.');
         } else {
-          print('Get hasil ujian failed: ${response.statusCode}');
-          print('Response body: ${response.body}');
-          throw HttpException('Error: ${response.statusCode}');
+          throw HttpException('Terjadi kesalahan pada server.');
         }
-      } on TimeoutException catch (e) {
-        print('Request timed out: $e');
+      } on TimeoutException {
         throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
-      } on SocketException catch (e) {
-        print('Socket exception: $e');
+      } on SocketException {
         throw Exception(
           'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
         );
       } catch (e) {
-        print('Error getting hasil ujian: $e');
-        throw Exception('Terjadi kesalahan: $e');
+        rethrow;
       }
     }
-  // Start Ujian - Mulai ujian dan get daftar soal
-  Future<StartUjianResponseModel> startUjian(int pesertaUjianId) async {
+  // Start Exam - Start exam and get question list
+  Future<StartExamResponseModel> startExam(int examId) async {
     final token = await SessionManager.getToken();
 
     if (token == null) {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/start');
+    final url = Uri.parse('${Url.emuUrl}/students/exams/start');
 
     try {
       final response = await http
@@ -119,45 +109,39 @@ class UjianService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token',
             },
-            body: jsonEncode({'peserta_ujian_id': pesertaUjianId}),
+            body: jsonEncode({'exam_id': examId}),
           )
           .timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        print('✅ Start Ujian Success: Peserta $pesertaUjianId');
-        return StartUjianResponseModel.fromJson(bodyMap);
+        return StartExamResponseModel.fromJson(bodyMap);
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        throw Exception(bodyMap['error'] ?? 'Gagal memulai ujian');
+        throw Exception(bodyMap['error'] ?? 'Failed to start exam');
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Silakan login kembali.');
       } else {
-        print('Start ujian failed: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        throw HttpException('Error: ${response.statusCode}');
+        throw HttpException('Terjadi kesalahan pada server.');
       }
-    } on TimeoutException catch (e) {
-      print('Request timed out: $e');
+    } on TimeoutException {
       throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
-    } on SocketException catch (e) {
-      print('Socket exception: $e');
+    } on SocketException {
       throw Exception(
         'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
       );
     } catch (e) {
-      print('Error starting ujian: $e');
       rethrow;
     }
   }
 
-  // Submit Jawaban - Submit jawaban per soal (auto-save)
-  Future<void> submitJawaban({
-    required int pesertaUjianId,
-    required int soalId,
-    int? opsiJawabanId,
-    List<int>? opsiJawabanIds,
-    String? teksJawaban,
+  // Submit Answer - Submit answer per question (auto-save)
+  Future<void> submitAnswer({
+    required int examParticipantId,
+    required int questionId,
+    int? answerOptionId,
+    List<int>? answerOptionIds,
+    String? answerText,
   }) async {
     final token = await SessionManager.getToken();
 
@@ -165,24 +149,26 @@ class UjianService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/jawaban');
+    final url = Uri.parse('${Url.emuUrl}/students/exams/answer');
 
     try {
       final Map<String, dynamic> body = {
-        'peserta_ujian_id': pesertaUjianId,
-        'soal_id': soalId,
+        'exam_participant_id': examParticipantId,
+        'question_id': questionId,
       };
 
-      if (opsiJawabanId != null) {
-        body['opsi_jawaban_id'] = opsiJawabanId;
+      // Backend expects mc_option_ids (array or single value) for MC questions
+      if (answerOptionId != null) {
+        body['mc_option_ids'] = [answerOptionId];
       }
 
-      if (opsiJawabanIds != null && opsiJawabanIds.isNotEmpty) {
-        body['opsi_jawaban_ids'] = opsiJawabanIds;
+      if (answerOptionIds != null) {
+        body['mc_option_ids'] = answerOptionIds;
       }
 
-      if (teksJawaban != null) {
-        body['teks_jawaban'] = teksJawaban;
+      // Backend expects essay_answer_text for essay questions
+      if (answerText != null) {
+        body['essay_answer_text'] = answerText;
       }
 
       final response = await http
@@ -197,41 +183,34 @@ class UjianService {
           .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('✅ Jawaban tersimpan: Soal $soalId');
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        print('⚠️ Submit jawaban warning: ${bodyMap['error']}');
-        throw Exception(bodyMap['error'] ?? 'Gagal menyimpan jawaban');
+        throw Exception(bodyMap['error'] ?? 'Failed to save answer');
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Silakan login kembali.');
       } else {
-        print('Submit jawaban failed: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        throw HttpException('Error: ${response.statusCode}');
+        throw HttpException('Terjadi kesalahan pada server.');
       }
-    } on TimeoutException catch (e) {
-      print('⚠️ Timeout submit jawaban soal $soalId: $e');
+    } on TimeoutException {
       throw Exception('Koneksi timeout. Jawaban mungkin belum tersimpan.');
-    } on SocketException catch (e) {
-      print('⚠️ Socket exception submit jawaban soal $soalId: $e');
+    } on SocketException {
       throw Exception(
         'Tidak dapat terhubung ke server. Jawaban akan disimpan lokal.',
       );
     } catch (e) {
-      print('⚠️ Error submit jawaban soal $soalId: $e');
       rethrow;
     }
   }
 
-  // Finish Ujian - Selesaikan ujian dan hitung nilai
-  Future<Map<String, dynamic>> finishUjian(int pesertaUjianId) async {
+  // Finish Exam - Complete exam and calculate score
+  Future<Map<String, dynamic>> finishExam(int examParticipantId) async {
     final token = await SessionManager.getToken();
 
     if (token == null) {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/siswa/ujians/finish');
+    final url = Uri.parse('${Url.emuUrl}/students/exams/finish');
 
     try {
       final response = await http
@@ -241,35 +220,60 @@ class UjianService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token',
             },
-            body: jsonEncode({'peserta_ujian_id': pesertaUjianId}),
+            body: jsonEncode({'exam_participant_id': examParticipantId}),
           )
           .timeout(Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        print('✅ Ujian selesai: ${bodyMap['message']}');
         return bodyMap;
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        throw Exception(bodyMap['error'] ?? 'Gagal menyelesaikan ujian');
+        throw Exception(bodyMap['error'] ?? 'Failed to finish exam');
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Silakan login kembali.');
       } else {
-        print('Finish ujian failed: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        throw HttpException('Error: ${response.statusCode}');
+        throw HttpException('Terjadi kesalahan pada server.');
       }
-    } on TimeoutException catch (e) {
-      print('Request timed out: $e');
+    } on TimeoutException {
       throw Exception('Koneksi timeout. Coba lagi.');
-    } on SocketException catch (e) {
-      print('Socket exception: $e');
+    } on SocketException {
       throw Exception(
         'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
       );
     } catch (e) {
-      print('Error finishing ujian: $e');
       rethrow;
+    }
+  }
+
+  // Report Violation - Student self-reports app lifecycle violation (anti-cheat)
+  Future<void> reportViolation({
+    required int examParticipantId,
+    required String violationType,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    if (token == null) return; // Silent fail - local block already set
+
+    final url = Uri.parse('${Url.emuUrl}/students/exams/report-violation');
+
+    try {
+      await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({
+              'exam_participant_id': examParticipantId,
+              'violation_type': violationType,
+            }),
+          )
+          .timeout(Duration(seconds: 5));
+    } catch (_) {
+      // Fire-and-forget: local block is already set via SharedPreferences.
+      // Server sync will happen on next exam start attempt.
     }
   }
 }

@@ -26,36 +26,36 @@ class LoginService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        return UserModel.fromJson(bodyMap);
+        final userModel = UserModel.fromJson(bodyMap);
+        
+        // Only allow student role on mobile app
+        if (userModel.user.role.toLowerCase() != 'student') {
+          throw Exception('Aplikasi ini hanya untuk siswa. Gunakan dashboard web untuk guru/admin.');
+        }
+        
+        return userModel;
       } else {
         // Parse error message from response
         String errorMessage = 'Login gagal';
         try {
           final Map<String, dynamic> errorBody = jsonDecode(response.body);
           errorMessage = errorBody['error'] ?? 'Login gagal';
-        } catch (e) {
-          print('Failed to parse error body: $e');
+        } catch (_) {
+          // ignore parse errors
         }
 
-        print('Login failed: ${response.statusCode}');
-        print('Response body: ${response.body}');
-
-        // Throw exception with specific error message
-        if (response.statusCode == 401) {
-          throw Exception('Password salah');
-        } else if (response.statusCode == 404) {
-          throw Exception('User tidak ditemukan');
+        // Unified error message - don't differentiate between wrong user/password
+        if (response.statusCode == 401 || response.statusCode == 404) {
+          throw Exception('Username atau password salah');
         } else if (response.statusCode == 403) {
           throw Exception('Akun dinonaktifkan');
         } else {
           throw Exception(errorMessage);
         }
       }
-    } on TimeoutException catch (e) {
-      print('Request timed out: $e');
+    } on TimeoutException {
       throw Exception('Koneksi timeout, silakan coba lagi');
-    } on SocketException catch (e) {
-      print('Network error: $e');
+    } on SocketException {
       throw Exception('Tidak dapat terhubung ke server');
     }
   }

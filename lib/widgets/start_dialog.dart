@@ -1,4 +1,3 @@
-// import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
 class StartDialog extends StatelessWidget {
@@ -15,6 +14,7 @@ class StartDialog extends StatelessWidget {
   final String okText;
 
   String _formatDateTime(DateTime date) {
+    final local = date.toLocal();
     final days = [
       'Minggu',
       'Senin',
@@ -39,12 +39,12 @@ class StartDialog extends StatelessWidget {
       'Desember',
     ];
 
-    String day = days[date.weekday % 7];
-    String month = months[date.month - 1];
+    String day = days[local.weekday % 7];
+    String month = months[local.month - 1];
     String time =
-        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 
-    return '$day, ${date.day} $month ${date.year}, $time';
+    return '$day, ${local.day} $month ${local.year}, $time';
   }
 
   @override
@@ -59,7 +59,7 @@ class StartDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 20,
               offset: Offset(0, 10),
             ),
@@ -92,7 +92,7 @@ class StartDialog extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFF11B1E2).withOpacity(0.1),
+                color: Color(0xFF11B1E2).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -150,7 +150,7 @@ class StartDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0xFF11B1E2).withOpacity(0.3),
+                          color: Color(0xFF11B1E2).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: Offset(0, 4),
                         ),

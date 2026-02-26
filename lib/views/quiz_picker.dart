@@ -1,6 +1,6 @@
 
 import 'package:cbt_app/models/quiz_model.dart';
-import 'package:cbt_app/models/ujian_model.dart';
+import 'package:cbt_app/models/exam_model.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/picker_item.dart';
 import 'package:cbt_app/widgets/finish_quiz_dialog.dart';
@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 class QuizPicker extends StatefulWidget {
   final List<QuizModel> quizList;
   final int currItem;
-  final UjianModel ujian;
+  final ExamModel exam;
   final VoidCallback? onFinishQuiz;
   final VoidCallback? onExitQuiz;
   
@@ -19,7 +19,7 @@ class QuizPicker extends StatefulWidget {
     super.key, 
     required this.quizList, 
     required this.currItem, 
-    required this.ujian,
+    required this.exam,
     this.onFinishQuiz,
     this.onExitQuiz,
   });
@@ -99,25 +99,26 @@ class _QuizPickerState extends State<QuizPicker> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                  Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      }, 
-                      icon: Icon(Icons.arrow_back),
-                      iconSize: 30,
-                    ),
-                    SizedBox(
-                      width: 300,
-                      child: Text(
-                          widget.ujian.subject,
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ),
-                  ],
-                ),
+                  Expanded(
+                    child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        }, 
+                        icon: Icon(Icons.arrow_back),
+                        iconSize: 30,
+                      ),
+                      Expanded(
+                        child: Text(
+                            widget.exam.subject,
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ),
+                    ],
+                  ),
+                  ),
               ],
             ),
           ),

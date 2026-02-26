@@ -1,30 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:cbt_app/models/ujian_response_model.dart';
+import 'package:cbt_app/models/exam_response_model.dart';
+import 'package:cbt_app/utils/helpers.dart';
 import 'package:cbt_app/widgets/exam_card.dart';
 
 class ExamListSection extends StatelessWidget {
-  final List<PesertaUjian> ujianList;
+  final List<ExamParticipant> examList;
   final Function(String) formatDate;
-  final Function(PesertaUjian, String, DateTime, int) onStartExam;
+  final Function(ExamParticipant, String, DateTime, int) onStartExam;
 
   const ExamListSection({
     super.key,
-    required this.ujianList,
+    required this.examList,
     required this.formatDate,
     required this.onStartExam,
   });
 
-  String _getExamType(String namaUjian) {
-    String examType = 'Ujian';
-    if (namaUjian.toUpperCase().contains('UTS')) {
-      examType = 'UTS';
-    } else if (namaUjian.toUpperCase().contains('UAS')) {
-      examType = 'UAS';
-    } else if (namaUjian.toUpperCase().contains('ULANGAN')) {
-      examType = 'Ulangan';
-    }
-    return examType;
-  }
+  // Use shared helper from utils/helpers.dart
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +47,11 @@ class ExamListSection extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Color(0xFF11B1E2).withOpacity(0.1),
+                  color: Color(0xFF11B1E2).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${ujianList.length} Ujian',
+                  '${examList.length} Ujian',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -73,7 +64,7 @@ class ExamListSection extends StatelessWidget {
         ),
         SizedBox(height: 16),
         Expanded(
-          child: ujianList.isEmpty
+          child: examList.isEmpty
               ? SingleChildScrollView(
                   physics: AlwaysScrollableScrollPhysics(),
                   child: SizedBox(
@@ -102,30 +93,30 @@ class ExamListSection extends StatelessWidget {
                 )
               : ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  itemCount: ujianList.length,
+                  itemCount: examList.length,
                   itemBuilder: (context, index) {
-                    final pesertaUjian = ujianList[index];
-                    final ujian = pesertaUjian.ujian;
+                    final examParticipant = examList[index];
+                    final exam = examParticipant.exam;
 
-                    String examType = _getExamType(ujian.namaUjian);
-                    String gradeText = '${ujian.tingkat} ${ujian.jurusan}';
+                    String examType = ExamTypeHelper.getExamType(exam.examName);
+                    String gradeText = '${exam.gradeLevel} ${exam.major ?? ''}';
 
                     return ExamCard(
-                      date: formatDate(ujian.tanggalMulai.toString()),
-                      subject: ujian.namaUjian,
+                      date: formatDate(exam.startDate.toString()),
+                      subject: exam.examName,
                       school: examType,
-                      teacher: ujian.mataPelajaran,
+                      teacher: exam.subject,
                       grade: gradeText,
                       imageUrl: 'assets/images/c${(index % 2) + 1}.jpg',
-                      status: pesertaUjian.statusUjian,
-                      score: pesertaUjian.hasil?.nilaiAkhir,
-                      onBtnPressed: pesertaUjian.statusUjian == 'DINILAI'
+                      status: examParticipant.examStatus,
+                      score: examParticipant.result?.finalScore,
+                      onBtnPressed: (examParticipant.examStatus == 'GRADED' || examParticipant.examStatus == 'COMPLETED')
                           ? () {}
                           : () => onStartExam(
-                              pesertaUjian,
-                              ujian.namaUjian,
-                              ujian.tanggalMulai,
-                              ujian.durasiMenit,
+                              examParticipant,
+                              exam.examName,
+                              exam.startDate,
+                              exam.durationMinutes,
                             ),
                     );
                   },

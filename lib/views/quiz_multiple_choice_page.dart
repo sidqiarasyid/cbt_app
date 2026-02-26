@@ -42,9 +42,6 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
     if (oldWidget.initialSelectedIndex != widget.initialSelectedIndex ||
         oldWidget.initialSelectedIndices != widget.initialSelectedIndices ||
         oldWidget.question != widget.question) {
-      print('🔄 QuizPilganPage didUpdateWidget: syncing state');
-      print('   Old: single=${oldWidget.initialSelectedIndex}, multiple=${oldWidget.initialSelectedIndices}');
-      print('   New: single=${widget.initialSelectedIndex}, multiple=${widget.initialSelectedIndices}');
       setState(() {
         _syncStateFromWidget();
       });
@@ -56,10 +53,8 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
       activeButtons = widget.initialSelectedIndices != null 
           ? List.from(widget.initialSelectedIndices!)
           : [];
-      print('📋 Synced multiple choice: $activeButtons');
     } else {
       activeButton = widget.initialSelectedIndex;
-      print('📋 Synced single choice: $activeButton');
     }
   }
 
@@ -69,22 +64,17 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
         // Multiple choice logic
         if (activeButtons.contains(index)) {
           activeButtons.remove(index);
-          print('🔄 Multiple choice UNSELECT: removed index $index, remaining: $activeButtons');
         } else {
           activeButtons.add(index);
-          print('✅ Multiple choice SELECT: added index $index, current: $activeButtons');
         }
         widget.onAnswerSelected(null, selectedIndices: activeButtons.isEmpty ? null : List.from(activeButtons));
       } else {
         // Single choice logic
         if (activeButton == index) {
           activeButton = null;
-          print('🔄 Single choice UNSELECT: cleared index $index');
           widget.onAnswerSelected(null);
         } else {
-          final oldButton = activeButton;
           activeButton = index;
-          print('✅ Single choice SELECT: changed from $oldButton to $index');
           widget.onAnswerSelected(index);
         }
       }
@@ -100,7 +90,7 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
       onTap: () => toggleButton(index),
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           border: Border.all(color: isActive ? ColorsApp.primaryColor : Color(0xffECEFF5)),
           borderRadius: BorderRadius.circular(10),
@@ -118,6 +108,8 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
               child: Text(
                 cont, 
                 style: TextStyle(
+                  fontSize: 14,
+                  height: 1.4,
                   fontWeight: FontWeight.w500, 
                   color: isActive ? ColorsApp.primaryColor : Colors.black
                 ),
@@ -138,40 +130,44 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 22, vertical: 20),
       child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
               padding: EdgeInsets.all(16),
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Color(0xffF3FBFE),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: ColorsApp.primaryColor)
               ),
-              child: Text(widget.question,
-              style: TextStyle(fontWeight: FontWeight.w600, color: ColorsApp.primaryColor),),
+              child: Text(
+                widget.question,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: ColorsApp.primaryColor,
+                  fontSize: 15,
+                  height: 1.5,
+                ),
+              ),
             ),
-            SizedBox(height: 5,),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,
-              child: widget.answerList.isEmpty 
-                ? Center(
+            SizedBox(height: 16),
+            widget.answerList.isEmpty 
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
                     child: Text(
                       'Tidak ada opsi jawaban',
                       style: TextStyle(color: Colors.grey),
                     ),
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(
-                      widget.answerList.length,
-
-                      (index) => Column(children: [
-                        buildButton(index, widget.answerList[index]),
-                        SizedBox(height: 10,)
-                      ],),
-                    ),
                   ),
-            ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: widget.answerList.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 10),
+                  itemBuilder: (context, index) => buildButton(index, widget.answerList[index]),
+                ),
             
             
           ],

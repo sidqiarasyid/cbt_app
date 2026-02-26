@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-class PickerItem extends StatefulWidget {
+class PickerItem extends StatelessWidget {
   final VoidCallback pickerTap;
   final String cont;
   final Color bgColor, contColor, brdColor; 
@@ -16,25 +16,20 @@ class PickerItem extends StatefulWidget {
     });
 
   @override
-  State<PickerItem> createState() => _PickerItemState();
-}
-
-class _PickerItemState extends State<PickerItem> {
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.pickerTap,
+      onTap: pickerTap,
       child: Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: widget.bgColor,
+          color: bgColor,
           border: Border.all(
-            color: widget.brdColor
+            color: brdColor
           )
         ),
-        child: Text(widget.cont, style: TextStyle(
-          color: widget.contColor, 
+        child: Text(cont, style: TextStyle(
+          color: contColor, 
           fontWeight: FontWeight.bold, 
           fontSize: 18),),
       ),

@@ -33,7 +33,7 @@ class ExamCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -86,7 +86,7 @@ class ExamCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0xFF11B1E2).withOpacity(0.4),
+                        color: Color(0xFF11B1E2).withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: Offset(0, 2),
                       ),
@@ -128,7 +128,7 @@ class ExamCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: Offset(0, 2),
                         ),
@@ -188,7 +188,7 @@ class ExamCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: ColorsApp.primaryColor.withOpacity(0.1),
+                              color: ColorsApp.primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -292,7 +292,7 @@ class ExamCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Pengajar',
+                          'Mata Pelajaran',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey.shade600,
@@ -317,8 +317,8 @@ class ExamCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Action Button - Only show if not DINILAI
-          if (status != 'DINILAI')
+          // Action Button - Only show if not GRADED or COMPLETED
+          if (status != 'GRADED' && status != 'COMPLETED')
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: Container(
@@ -330,7 +330,7 @@ class ExamCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFF11B1E2).withOpacity(0.3),
+                      color: Color(0xFF11B1E2).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: Offset(0, 4),
                     ),
@@ -374,13 +374,13 @@ class ExamCard extends StatelessWidget {
   // Helper methods for status
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'BELUM_MULAI':
+      case 'NOT_STARTED':
         return Colors.blue.shade600;
-      case 'SEDANG_BERLANGSUNG':
+      case 'IN_PROGRESS':
         return Colors.orange.shade600;
-      case 'DINILAI':
+      case 'GRADED':
         return Colors.green.shade600;
-      case 'SELESAI':
+      case 'COMPLETED':
         return Colors.grey.shade600;
       default:
         return Colors.blue.shade600;
@@ -389,13 +389,13 @@ class ExamCard extends StatelessWidget {
 
   IconData _getStatusIcon(String status) {
     switch (status) {
-      case 'BELUM_MULAI':
+      case 'NOT_STARTED':
         return Icons.schedule_rounded;
-      case 'SEDANG_BERLANGSUNG':
+      case 'IN_PROGRESS':
         return Icons.pending_rounded;
-      case 'DINILAI':
+      case 'GRADED':
         return Icons.check_circle_rounded;
-      case 'SELESAI':
+      case 'COMPLETED':
         return Icons.done_all_rounded;
       default:
         return Icons.info_rounded;
@@ -404,13 +404,13 @@ class ExamCard extends StatelessWidget {
 
   String _getStatusText(String status) {
     switch (status) {
-      case 'BELUM_MULAI':
+      case 'NOT_STARTED':
         return 'Belum Mulai';
-      case 'SEDANG_BERLANGSUNG':
-        return 'Berlangsung';
-      case 'DINILAI':
-        return 'Selesai';
-      case 'SELESAI':
+      case 'IN_PROGRESS':
+        return 'Sedang Berlangsung';
+      case 'GRADED':
+        return 'Sudah Dinilai';
+      case 'COMPLETED':
         return 'Selesai';
       default:
         return status;
@@ -418,9 +418,9 @@ class ExamCard extends StatelessWidget {
   }
 
   String _getButtonText() {
-    if (status == 'DINILAI') {
+    if (status == 'GRADED') {
       return 'Lihat Nilai';
-    } else if (status == 'SEDANG_BERLANGSUNG') {
+    } else if (status == 'IN_PROGRESS') {
       return 'Lanjutkan';
     }
     return 'Mulai Ujian';

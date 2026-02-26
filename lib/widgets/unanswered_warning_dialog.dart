@@ -1,4 +1,3 @@
-import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
 class UnansweredWarningDialog extends StatelessWidget {
@@ -15,104 +14,170 @@ class UnansweredWarningDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(  
+    return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0.0,
-      insetPadding: EdgeInsets.symmetric(horizontal: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
-        ),
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: ColorsApp.secondaryColor,
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.block, size: 50, color: Colors.red),
-              SizedBox(height: 10),
-              Text(
-                "Perhatian!", 
-                textAlign: TextAlign.center, 
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFF44336), Color(0xFFC62828)],
                 ),
+                shape: BoxShape.circle,
               ),
-              SizedBox(height: 10),
-              Text(
-                "Ada $unansweredCount soal yang belum dijawab.", 
-                textAlign: TextAlign.center,
-                style: TextStyle(
+              child: const Icon(Icons.warning_amber_rounded, size: 40, color: Colors.white),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Perhatian!",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Unanswered count badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF44336).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                "$unansweredCount soal belum dijawab",
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  color: Color(0xFFC62828),
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
-                "Jika keluar sekarang, anda akan TERBLOKIR dari ujian ini.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.red[700],
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF44336).withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF44336).withValues(alpha: 0.15)),
               ),
-              SizedBox(height: 8),
-              Text(
-                "Jawaban yang sudah tersimpan akan tetap dihitung saat ujian berakhir (auto-complete).",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                ),
-              ),
-              SizedBox(height: 12),
-              Text(
-                "Apakah anda yakin ingin keluar?",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 16),
-              Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[200],
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: onBack,
-                      child: Text("Kembali", style: TextStyle(fontSize: 13)),
+                  Text(
+                    "Jika keluar sekarang, anda akan TERBLOKIR dari ujian ini.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.red[700],
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Expanded(
+                  const SizedBox(height: 8),
+                  Text(
+                    "Jawaban yang sudah tersimpan akan tetap dihitung saat ujian berakhir.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[700],
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Apakah anda yakin ingin keluar?",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: onBack,
+                    child: const Text(
+                      "Kembali",
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF44336), Color(0xFFC62828)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF44336).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: onContinue,
-                      child: Text(
-                        "Tetap Keluar", 
+                      child: const Text(
+                        "Tetap Keluar",
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 13,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
-                ],
-              )
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -62,7 +62,7 @@ class _QuizEssayPageState extends State<QuizEssayPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [ 
@@ -72,7 +72,7 @@ class _QuizEssayPageState extends State<QuizEssayPage> {
             width: double.infinity,
             decoration: BoxDecoration(
               color: Color(0xffF3FBFE),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: ColorsApp.primaryColor)
             ),
             child: Text(
@@ -140,7 +140,7 @@ class _QuizEssayPageState extends State<QuizEssayPage> {
             ],
           ),
           
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           
           // Answer Text Field
           Form(
@@ -148,7 +148,7 @@ class _QuizEssayPageState extends State<QuizEssayPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border.all(
-                  color: ColorsApp.primaryColor.withOpacity(.3),
+                  color: ColorsApp.primaryColor.withValues(alpha: 0.3),
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
@@ -164,11 +164,13 @@ class _QuizEssayPageState extends State<QuizEssayPage> {
                 controller: widget.controller,
                 onChanged: _onTextChanged,
                 maxLines: 10,
+                maxLength: 5000,
                 decoration: const InputDecoration(
                   hintText: 'Ketik jawaban Anda di sini...',
                   hintStyle: TextStyle(color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(8),
+                  counterText: '',
                 ),
                 style: TextStyle(
                   fontSize: 14,
@@ -185,10 +187,10 @@ class _QuizEssayPageState extends State<QuizEssayPage> {
           
           // Character Count
           Text(
-            '$_characterCount karakter',
+            '$_characterCount / 5000 karakter',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: _characterCount >= 5000 ? Colors.red : Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
           ),
