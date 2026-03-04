@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:cbt_app/models/quiz_model.dart';
 import 'package:cbt_app/models/exam_model.dart';
 import 'package:cbt_app/views/quiz_blocked_page.dart';
@@ -7,6 +8,8 @@ import 'package:cbt_app/views/quiz_essay_page.dart';
 import 'package:cbt_app/views/quiz_picker.dart';
 import 'package:cbt_app/views/quiz_multiple_choice_page.dart';
 import 'package:cbt_app/services/exam_service.dart';
+import 'package:cbt_app/services/offline_exam_storage.dart';
+import 'package:cbt_app/services/offline_sync_service.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/dialogs/exit_all_answered_dialog.dart';
 import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
@@ -34,8 +37,11 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   Timer? _countdownTimer;
   Duration _remainingTime = Duration.zero;
   final ExamService _examService = ExamService();
+  final OfflineSyncService _syncService = OfflineSyncService();
   bool _isBlocked = false;
+  bool _isOffline = false;
   Timer? _inactiveTimer;
+  Timer? _connectivityTimer;
 
   @override
   void initState() {
@@ -59,6 +65,34 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     
     loadCurrentQuestion();
     _initializeTimer();
+    _startConnectivityCheck();
+  }
+
+  /// Memeriksa konektivitas secara periodik dan sinkronkan data offline
+  void _startConnectivityCheck() {
+    _connectivityTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+      final wasOffline = _isOffline;
+      try {
+        final result = await InternetAddress.lookup('google.com')
+            .timeout(const Duration(seconds: 3));
+        final isOnline = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+        if (mounted) {
+          setState(() {
+            _isOffline = !isOnline;
+          });
+        }
+        // If we just came back online, try to sync pending answers
+        if (wasOffline && isOnline) {
+          _syncService.syncAnswersForExam(widget.exam.examParticipantId);
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _isOffline = true;
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -167,16 +201,83 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   }
 
   void _autoFinishUjian({int retryCount = 0}) async {
-    const maxRetries = 3;
+    const maxRetries = 5;
+
+    // Cek internet sebelum mengirim
+    bool hasInternet = false;
     try {
+      final result = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(seconds: 5));
+      hasInternet = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      hasInternet = false;
+    }
+
+    if (!hasInternet) {
+      debugPrint('[AutoFinish] No internet (attempt ${retryCount + 1})');
+      if (retryCount < maxRetries) {
+        await Future.delayed(Duration(seconds: 3 * (retryCount + 1)));
+        if (mounted) _autoFinishUjian(retryCount: retryCount + 1);
+      } else {
+        // All retries exhausted — show persistent dialog
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            icon: Icon(Icons.timer_off_rounded, size: 48, color: Colors.red.shade400),
+            title: const Text(
+              'Waktu Ujian Habis',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Waktu ujian telah habis, tetapi tidak ada koneksi internet '
+              'untuk mengirim hasil ujian. Hubungkan internet lalu tekan tombol kirim.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  _autoFinishUjian(retryCount: 0);
+                },
+                icon: const Icon(Icons.send, size: 18),
+                label: const Text('Kirim Ujian'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4CAF50),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      // Sync pending answers first
+      await _syncService.syncAnswersForExam(widget.exam.examParticipantId);
       await _examService.finishExam(widget.exam.examParticipantId);
+
+      // Clean up offline data
+      await OfflineExamStorage.clearPendingAnswers(widget.exam.examParticipantId);
+      await OfflineExamStorage.removePendingFinish(widget.exam.examParticipantId);
+      await OfflineExamStorage.clearCachedExamData(widget.exam.examId);
+      await OfflineExamStorage.removeDownloadedMark(widget.exam.examId);
+
       if (!mounted) return;
       
       // Capture messenger before navigation pops the page
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).popUntil((route) => route.isFirst);
       messenger.showSnackBar(
-        SnackBar(content: Text('Waktu ujian habis. Ujian telah selesai.'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Waktu ujian habis. Ujian telah selesai.'), backgroundColor: Colors.red),
       );
     } catch (e) {
       debugPrint('[AutoFinish] Failed (attempt ${retryCount + 1}): $e');
@@ -185,15 +286,41 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
         await Future.delayed(Duration(seconds: 2 * (retryCount + 1)));
         if (mounted) _autoFinishUjian(retryCount: retryCount + 1);
       } else {
-        // All retries exhausted — notify user
+        // All retries exhausted — show dialog to retry manually
         if (!mounted) return;
-        final messenger = ScaffoldMessenger.of(context);
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Waktu habis. Gagal mengirim ujian otomatis, hubungi pengawas.'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            icon: Icon(Icons.error_outline_rounded, size: 48, color: Colors.red.shade400),
+            title: const Text(
+              'Gagal Mengirim Ujian',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Waktu ujian habis tetapi gagal mengirim ke server. '
+              'Pastikan internet tersambung lalu coba lagi, atau hubungi pengawas.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  _autoFinishUjian(retryCount: 0);
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF11B1E2),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
           ),
         );
       }
@@ -215,6 +342,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   void dispose() {
     _countdownTimer?.cancel();
     _inactiveTimer?.cancel();
+    _connectivityTimer?.cancel();
     essayController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -250,81 +378,134 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     
     try {
       if (quiz.quizType == "ESSAY") {
-        // Essay answer - submit even if empty to allow deletion
-        await _examService.submitAnswer(
+        final text = essayController.text.trim().isEmpty ? null : essayController.text.trim();
+        
+        // Always save locally first
+        await OfflineExamStorage.savePendingAnswer(
           examParticipantId: widget.exam.examParticipantId,
           questionId: quiz.questionId,
-          answerText: essayController.text.trim().isEmpty ? null : essayController.text.trim(),
+          answerText: text,
+          quizType: quiz.quizType,
         );
+        
         setState(() {
-          quiz.answerEssay = essayController.text.trim().isEmpty ? null : essayController.text.trim();
-          quiz.isSaved = essayController.text.trim().isNotEmpty;
+          quiz.answerEssay = text;
+          quiz.isSaved = text != null;
         });
-        if (essayController.text.trim().isEmpty) {
-        } else {
+        
+        // Try to sync to server
+        try {
+          await _examService.submitAnswer(
+            examParticipantId: widget.exam.examParticipantId,
+            questionId: quiz.questionId,
+            answerText: text,
+          );
+          await OfflineExamStorage.removePendingAnswer(
+            widget.exam.examParticipantId, quiz.questionId);
+          if (mounted && _isOffline) setState(() => _isOffline = false);
+        } catch (e) {
+          _handleSubmitError(e);
         }
       } else if (quiz.quizType == "SINGLE_CHOICE") {
+        int? optionId;
         if (quiz.selectedAnswerIndex != null && quiz.answerOptions != null) {
-          // Submit selected answer
-          final optionId = quiz.answerOptions![quiz.selectedAnswerIndex!].optionId;
+          optionId = quiz.answerOptions![quiz.selectedAnswerIndex!].optionId;
+        }
+        
+        // Always save locally first
+        await OfflineExamStorage.savePendingAnswer(
+          examParticipantId: widget.exam.examParticipantId,
+          questionId: quiz.questionId,
+          answerOptionId: optionId,
+          quizType: quiz.quizType,
+        );
+        
+        setState(() {
+          quiz.isSaved = optionId != null;
+        });
+        
+        // Try to sync to server
+        try {
           await _examService.submitAnswer(
             examParticipantId: widget.exam.examParticipantId,
             questionId: quiz.questionId,
             answerOptionId: optionId,
           );
-          setState(() {
-            quiz.isSaved = true;
-          });
-        } else {
-          // No selection - delete existing answer
-          await _examService.submitAnswer(
-            examParticipantId: widget.exam.examParticipantId,
-            questionId: quiz.questionId,
-            answerOptionId: null,
-          );
-          setState(() {
-            quiz.isSaved = false;
-          });
+          await OfflineExamStorage.removePendingAnswer(
+            widget.exam.examParticipantId, quiz.questionId);
+          if (mounted && _isOffline) setState(() => _isOffline = false);
+        } catch (e) {
+          _handleSubmitError(e);
         }
       } else if (quiz.quizType == "MULTIPLE_CHOICE") {
+        List<int>? optionIds;
         if (quiz.selectedAnswerIndices != null && 
             quiz.selectedAnswerIndices!.isNotEmpty && 
             quiz.answerOptions != null) {
-          // Submit selected answers
-          final optionIds = quiz.selectedAnswerIndices!
+          optionIds = quiz.selectedAnswerIndices!
               .map((index) => quiz.answerOptions![index].optionId)
               .toList();
+        }
+        
+        // Always save locally first
+        await OfflineExamStorage.savePendingAnswer(
+          examParticipantId: widget.exam.examParticipantId,
+          questionId: quiz.questionId,
+          answerOptionIds: optionIds ?? [],
+          quizType: quiz.quizType,
+        );
+        
+        setState(() {
+          quiz.isSaved = optionIds != null && optionIds.isNotEmpty;
+        });
+        
+        // Try to sync to server
+        try {
           await _examService.submitAnswer(
             examParticipantId: widget.exam.examParticipantId,
             questionId: quiz.questionId,
-            answerOptionIds: optionIds,
+            answerOptionIds: optionIds ?? [],
           );
-          setState(() {
-            quiz.isSaved = true;
-          });
-        } else {
-          // No selection - delete existing answer
-          await _examService.submitAnswer(
-            examParticipantId: widget.exam.examParticipantId,
-            questionId: quiz.questionId,
-            answerOptionIds: [],
-          );
-          setState(() {
-            quiz.isSaved = false;
-          });
+          await OfflineExamStorage.removePendingAnswer(
+            widget.exam.examParticipantId, quiz.questionId);
+          if (mounted && _isOffline) setState(() => _isOffline = false);
+        } catch (e) {
+          _handleSubmitError(e);
         }
       }
+      
+      // Update cached exam data for offline
+      await OfflineExamStorage.cacheExamData(widget.exam);
     } catch (e) {
       debugPrint('[SubmitAnswer] Failed: $e');
-      if (mounted) {
+      // Jawaban tetap tersimpan secara lokal
+    }
+  }
+
+  void _handleSubmitError(dynamic e) {
+    final errorStr = e.toString();
+    if (errorStr.contains('Tidak dapat terhubung') || 
+        errorStr.contains('timeout') ||
+        errorStr.contains('SocketException') ||
+        e is SocketException) {
+      if (mounted && !_isOffline) {
+        setState(() => _isOffline = true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Jawaban gagal disimpan. Coba lagi.'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 2),
+            content: Row(
+              children: [
+                Icon(Icons.cloud_off, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Expanded(child: Text('Mode offline - jawaban disimpan lokal')),
+              ],
+            ),
+            backgroundColor: Colors.orange[700],
+            duration: Duration(seconds: 3),
           ),
         );
       }
+    } else {
+      debugPrint('[SubmitAnswer] Non-network error: $e');
     }
   }
 
@@ -498,6 +679,64 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   }
 
   Future<void> _finishQuiz() async {
+    // ===== WAJIB INTERNET: Cek koneksi sebelum submit =====
+    bool hasInternet = false;
+    try {
+      final result = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(seconds: 5));
+      hasInternet = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      hasInternet = false;
+    }
+
+    if (!hasInternet) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: Icon(Icons.wifi_off_rounded, size: 48, color: Colors.red.shade400),
+          title: const Text(
+            'Tidak Ada Koneksi Internet',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Koneksi internet diperlukan untuk mengirim hasil ujian. '
+            'Hubungkan ke internet lalu coba lagi.\n\n'
+            'Jawaban Anda tetap tersimpan di perangkat.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Kembali ke Ujian'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                // Retry after user confirms
+                await _finishQuiz();
+              },
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF11B1E2),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
     // Show loading with green gradient (submit theme)
     showLoadingDialog(
       context,
@@ -506,12 +745,21 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     );
     
     try {
+      // Sync all pending answers before finishing
+      await _syncService.syncAnswersForExam(widget.exam.examParticipantId);
+      
+      // Finish exam on server
       await _examService.finishExam(widget.exam.examParticipantId);
+      
+      // Clean up offline data
+      await OfflineExamStorage.clearPendingAnswers(widget.exam.examParticipantId);
+      await OfflineExamStorage.removePendingFinish(widget.exam.examParticipantId);
+      await OfflineExamStorage.clearCachedExamData(widget.exam.examId);
+      await OfflineExamStorage.removeDownloadedMark(widget.exam.examId);
       
       if (!mounted) return;
       Navigator.pop(context); // Close loading
       
-      // Navigate to exam completion page
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -521,13 +769,70 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
           ),
         ),
       );
-      
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading
       
-      showErrorDialog(context, 'Gagal menyelesaikan ujian. Silakan coba lagi.');
+      final errorStr = e.toString();
+      final isNetworkError = errorStr.contains('Tidak dapat terhubung') || 
+          errorStr.contains('timeout') ||
+          errorStr.contains('SocketException') ||
+          e is SocketException;
+      
+      if (isNetworkError) {
+        // Koneksi terputus saat proses - minta coba lagi
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            icon: Icon(Icons.cloud_off_rounded, size: 48, color: Colors.orange.shade400),
+            title: const Text(
+              'Koneksi Terputus',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Koneksi internet terputus saat mengirim ujian. '
+              'Jawaban Anda sudah tersimpan. '
+              'Hubungkan kembali dan coba lagi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Kembali ke Ujian'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await _finishQuiz();
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF11B1E2),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        showErrorDialog(context, 'Gagal menyelesaikan ujian: ${_sanitizeError(errorStr)}');
+      }
     }
+  }
+
+  String _sanitizeError(String error) {
+    final cleaned = error.replaceFirst(RegExp(r'^Exception:\s*'), '');
+    if (cleaned.contains('SocketException') || cleaned.contains('HttpException')) {
+      return 'Tidak dapat terhubung ke server.';
+    }
+    return cleaned;
   }
 
   Future<void> navigatePicker(
@@ -619,6 +924,25 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                   ),
                   Row(
                     children: [
+                      // Offline indicator
+                      if (_isOffline)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          margin: EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[100],
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.orange),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.cloud_off, size: 14, color: Colors.orange[800]),
+                              SizedBox(width: 4),
+                              Text('Offline', style: TextStyle(fontSize: 11, color: Colors.orange[800], fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
                       Container(
                         constraints: BoxConstraints(minWidth: 80),
                         alignment: Alignment.center,
@@ -664,6 +988,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                     widget.exam.quizList[currentQuestion].quizType == "ESSAY" 
                       ? QuizEssayPage(                          key: ValueKey('essay_${widget.exam.quizList[currentQuestion].questionId}_$currentQuestion'),                          question: ques, 
                           controller: essayController,
+                          questionImage: widget.exam.quizList[currentQuestion].image,
                           onChanged: () {
                             // Auto-save essay after debounce
                             _submitAnswer();
@@ -673,6 +998,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                           key: ValueKey('soal_${widget.exam.quizList[currentQuestion].questionId}_$currentQuestion'),
                           question: ques, 
                           answerList: answer,
+                          questionImage: widget.exam.quizList[currentQuestion].image,
                           initialSelectedIndex: widget.exam.quizList[currentQuestion].selectedAnswerIndex,
                           initialSelectedIndices: widget.exam.quizList[currentQuestion].selectedAnswerIndices,
                           isMultipleChoice: widget.exam.quizList[currentQuestion].quizType == "MULTIPLE_CHOICE",

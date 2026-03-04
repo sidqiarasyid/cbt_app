@@ -5,7 +5,7 @@ import 'package:cbt_app/models/exam_model.dart';
 
 class QuizEndPage extends StatelessWidget {
   final ExamModel exam;
-  final DateTime? submittedAt; 
+  final DateTime? submittedAt;
 
   const QuizEndPage({
     super.key,
