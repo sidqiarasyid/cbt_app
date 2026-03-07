@@ -9,6 +9,7 @@ class QuizPilganPage extends StatefulWidget {
   final int? initialSelectedIndex;
   final List<int>? initialSelectedIndices;
   final bool isMultipleChoice;
+  final String? questionImage;
   final Function(int?, {List<int>? selectedIndices}) onAnswerSelected;
   
   const QuizPilganPage({
@@ -18,6 +19,7 @@ class QuizPilganPage extends StatefulWidget {
     this.initialSelectedIndex,
     this.initialSelectedIndices,
     this.isMultipleChoice = false,
+    this.questionImage,
     required this.onAnswerSelected,
   });
 
@@ -132,6 +134,52 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Question Image (displayed above question text)
+            if (widget.questionImage != null && widget.questionImage!.isNotEmpty)
+              Container(
+                margin: EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: ColorsApp.primaryColor.withValues(alpha: 0.3)),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    widget.questionImage!,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 180,
+                        alignment: Alignment.center,
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: ColorsApp.primaryColor,
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 120,
+                        alignment: Alignment.center,
+                        color: Colors.grey[100],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                            SizedBox(height: 4),
+                            Text('Gambar tidak dapat dimuat', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
             Container(
               padding: EdgeInsets.all(16),
               width: double.infinity,

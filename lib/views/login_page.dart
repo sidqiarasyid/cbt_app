@@ -1,4 +1,5 @@
 import 'package:cbt_app/controllers/auth_controller.dart';
+import 'package:cbt_app/services/school_profile_service.dart';
 import 'package:flutter/material.dart';
 import '../main.dart';
 
@@ -15,8 +16,22 @@ class _LoginpageState extends State<Loginpage> {
   bool isPasswordVisible = false;
   bool isLoading = false;
   final AuthController _authController = AuthController();
+  String _schoolName = 'CBT App';
 
   static const Color _primaryBlue = Color(0xFF11B1E2);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSchoolProfile();
+  }
+
+  Future<void> _loadSchoolProfile() async {
+    final profile = await SchoolProfileService.fetchProfile();
+    if (mounted) {
+      setState(() => _schoolName = profile.schoolName);
+    }
+  }
 
   @override
   void dispose() {
@@ -150,14 +165,15 @@ class _LoginpageState extends State<Loginpage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Hello',
-                  style: TextStyle(
-                    fontSize: 34,
+                Text(
+                  _schoolName,
+                  style: const TextStyle(
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     letterSpacing: 1,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
                 const Text(

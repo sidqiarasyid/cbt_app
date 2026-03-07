@@ -7,12 +7,18 @@ class ExamListSection extends StatelessWidget {
   final List<ExamParticipant> examList;
   final Function(String) formatDate;
   final Function(ExamParticipant, String, DateTime, int) onStartExam;
+  final Function(ExamParticipant, String, DateTime, int)? onDownloadExam;
+  final Set<int> downloadedExamIds;
+  final Set<int> downloadingExamIds;
 
   const ExamListSection({
     super.key,
     required this.examList,
     required this.formatDate,
     required this.onStartExam,
+    this.onDownloadExam,
+    this.downloadedExamIds = const {},
+    this.downloadingExamIds = const {},
   });
 
   // Use shared helper from utils/helpers.dart
@@ -110,6 +116,16 @@ class ExamListSection extends StatelessWidget {
                       imageUrl: 'assets/images/c${(index % 2) + 1}.jpg',
                       status: examParticipant.examStatus,
                       score: examParticipant.result?.finalScore,
+                      isDownloaded: downloadedExamIds.contains(exam.examId),
+                      isDownloading: downloadingExamIds.contains(exam.examId),
+                      onDownloadPressed: onDownloadExam != null
+                          ? () => onDownloadExam!(
+                              examParticipant,
+                              exam.examName,
+                              exam.startDate,
+                              exam.durationMinutes,
+                            )
+                          : null,
                       onBtnPressed: (examParticipant.examStatus == 'GRADED' || examParticipant.examStatus == 'COMPLETED')
                           ? () {}
                           : () => onStartExam(
