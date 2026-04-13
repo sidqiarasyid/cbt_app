@@ -11,6 +11,7 @@ import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
 import 'package:cbt_app/utils/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/page_transitions.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -148,16 +149,12 @@ class _HomePageState extends State<HomePage> {
         if (!mounted) return;
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => QuizBlockedPage(
-              examName: examName,
-            ),
-          ),
+          fadeSlideRoute(QuizBlockedPage(examName: examName)),
         );
       } else {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => QuizPage(exam: examModel)),
+          fadeSlideRoute(QuizPage(exam: examModel)),
         ).then((_) => _refreshUjianList());
       }
     } catch (e) {

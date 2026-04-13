@@ -1,5 +1,7 @@
 import 'package:cbt_app/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../utils/page_transitions.dart';
 
 class QuizBlockedPage extends StatefulWidget {
   final String? examName;
@@ -63,7 +65,14 @@ class _QuizBlockedPageState extends State<QuizBlockedPage> {
                   ],
                 ),
                 child: const Icon(Icons.block_rounded, color: Colors.white, size: 72),
-              ),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(1, 1),
+                    end: const Offset(1.06, 1.06),
+                    duration: 1200.ms,
+                    curve: Curves.easeInOut,
+                  ),
               const SizedBox(height: 32),
               // Title
               const Text(
@@ -73,7 +82,13 @@ class _QuizBlockedPageState extends State<QuizBlockedPage> {
                   fontWeight: FontWeight.bold,
                   color: Color(0xFFC62828),
                 ),
-              ),
+              ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(
+                    begin: 0.2,
+                    end: 0,
+                    delay: 200.ms,
+                    duration: 400.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
               const SizedBox(height: 24),
               // Violation info card
               Container(
@@ -185,7 +200,7 @@ class _QuizBlockedPageState extends State<QuizBlockedPage> {
                     ),
                     onPressed: () {
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const MyHomePage()),
+                        fadeSlideRoute(const MyHomePage()),
                         (route) => false,
                       );
                     },

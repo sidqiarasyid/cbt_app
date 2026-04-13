@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 // Import widgets
 import 'widgets/navbar.dart';
+import 'utils/page_transitions.dart';
 
 // Import views
 import 'views/home_page.dart';
@@ -62,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const MyHomePage()),
+          fadeSlideRoute(const MyHomePage()),
         );
       } catch (_) {
         // Token expired or invalid — redirect to login
@@ -70,13 +71,13 @@ class _SplashScreenState extends State<SplashScreen> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const Loginpage()),
+          fadeSlideRoute(const Loginpage()),
         );
       }
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const Loginpage()),
+        fadeSlideRoute(const Loginpage()),
       );
     }
   }
