@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cbt_app/models/exam_response_model.dart';
 import 'package:cbt_app/utils/helpers.dart';
 import 'package:cbt_app/widgets/exam_card.dart';
@@ -134,7 +135,19 @@ class ExamListSection extends StatelessWidget {
                               exam.startDate,
                               exam.durationMinutes,
                             ),
-                    );
+                    )
+                        .animate()
+                        .fadeIn(
+                          delay: Duration(milliseconds: 50 * index),
+                          duration: 350.ms,
+                        )
+                        .slideY(
+                          begin: 0.12,
+                          end: 0,
+                          delay: Duration(milliseconds: 50 * index),
+                          duration: 350.ms,
+                          curve: Curves.easeOutCubic,
+                        );
                   },
                   separatorBuilder: (context, index) => SizedBox(height: 16),
                 ),

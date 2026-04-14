@@ -1,7 +1,9 @@
 import 'package:cbt_app/controllers/auth_controller.dart';
 import 'package:cbt_app/services/school_profile_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../main.dart';
+import '../utils/page_transitions.dart';
 
 class Loginpage extends StatefulWidget {
   const Loginpage({super.key});
@@ -55,7 +57,7 @@ class _LoginpageState extends State<Loginpage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MyHomePage()),
+        fadeSlideRoute(MyHomePage()),
       );
     } catch (e) {
       if (!mounted) return;
@@ -163,7 +165,12 @@ class _LoginpageState extends State<Loginpage> {
                       ),
                     ),
                   ),
-                ),
+                ).animate().fadeIn(duration: 500.ms).scale(
+                      begin: const Offset(0.7, 0.7),
+                      end: const Offset(1, 1),
+                      duration: 500.ms,
+                      curve: Curves.easeOutBack,
+                    ),
                 const SizedBox(height: 16),
                 Text(
                   _schoolName,
@@ -173,8 +180,13 @@ class _LoginpageState extends State<Loginpage> {
                     color: Colors.white,
                     letterSpacing: 1,
                   ),
-                  textAlign: TextAlign.center,
-                ),
+                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(
+                      begin: 0.3,
+                      end: 0,
+                      delay: 200.ms,
+                      duration: 400.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
                 const SizedBox(height: 6),
                 const Text(
                   'Sign into your Account',
@@ -183,7 +195,7 @@ class _LoginpageState extends State<Loginpage> {
                     color: Color(0xE6FFFFFF),
                     fontWeight: FontWeight.w400,
                   ),
-                ),
+                ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
 
                 // ── Scrollable form area ──
                 SizedBox(height: size.height * 0.10),
@@ -200,7 +212,13 @@ class _LoginpageState extends State<Loginpage> {
                             hint: 'Username',
                             icon: Icons.person_outline_rounded,
                             maxLength: 50,
-                          ),
+                          ).animate().fadeIn(delay: 500.ms, duration: 400.ms).slideY(
+                                begin: 0.3,
+                                end: 0,
+                                delay: 500.ms,
+                                duration: 400.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
                           const SizedBox(height: 18),
                           // Password field
                           _buildTextField(
@@ -209,10 +227,22 @@ class _LoginpageState extends State<Loginpage> {
                             icon: Icons.lock_outline_rounded,
                             maxLength: 128,
                             isPassword: true,
-                          ),
+                          ).animate().fadeIn(delay: 600.ms, duration: 400.ms).slideY(
+                                begin: 0.3,
+                                end: 0,
+                                delay: 600.ms,
+                                duration: 400.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
                           const SizedBox(height: 32),
                           // Login button
-                          _buildLoginButton(),
+                          _buildLoginButton().animate().fadeIn(delay: 750.ms, duration: 400.ms).slideY(
+                                begin: 0.4,
+                                end: 0,
+                                delay: 750.ms,
+                                duration: 400.ms,
+                                curve: Curves.easeOutCubic,
+                              ),
                           const SizedBox(height: 40),
                           // Footer
                           Text(
