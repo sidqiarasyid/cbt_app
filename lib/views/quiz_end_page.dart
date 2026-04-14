@@ -1,7 +1,9 @@
 import 'package:cbt_app/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:cbt_app/models/exam_model.dart';
+import '../utils/page_transitions.dart';
 
 class QuizEndPage extends StatelessWidget {
   final ExamModel exam;
@@ -61,7 +63,16 @@ class QuizEndPage extends StatelessWidget {
                   ],
                 ),
                 child: const Icon(Icons.check_rounded, color: Colors.white, size: 72),
-              ),
+              )
+                  .animate()
+                  .scale(
+                    begin: const Offset(0, 0),
+                    end: const Offset(1, 1),
+                    duration: 600.ms,
+                    curve: Curves.elasticOut,
+                  )
+                  .then(delay: 100.ms)
+                  .shimmer(duration: 900.ms, color: Colors.white.withValues(alpha: 0.5)),
               const SizedBox(height: 32),
               // Title
               const Text(
@@ -71,7 +82,13 @@ class QuizEndPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
-              ),
+              ).animate().fadeIn(delay: 400.ms, duration: 400.ms).slideY(
+                    begin: 0.3,
+                    end: 0,
+                    delay: 400.ms,
+                    duration: 400.ms,
+                    curve: Curves.easeOutCubic,
+                  ),
               const SizedBox(height: 12),
               Text(
                 title,
@@ -177,7 +194,7 @@ class QuizEndPage extends StatelessWidget {
                     ),
                     onPressed: () {
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const MyHomePage()),
+                        fadeSlideRoute(const MyHomePage()),
                         (route) => false,
                       );
                     },

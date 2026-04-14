@@ -1,3 +1,4 @@
+import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
 class NavBar extends StatefulWidget {
@@ -74,7 +75,7 @@ class _NavBarState extends State<NavBar> with TickerProviderStateMixin {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // White bar background
+              // Nav bar background — matches page background with drop shadow
               Positioned(
                 left: 0,
                 right: 0,
@@ -83,13 +84,20 @@ class _NavBarState extends State<NavBar> with TickerProviderStateMixin {
                   height: _navHeight,
                   margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: ColorsApp.backgroundColor,
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 20,
-                        offset: const Offset(0, -2),
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 28,
+                        spreadRadius: 0,
+                        offset: const Offset(0, -4),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 10,
+                        spreadRadius: -2,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),

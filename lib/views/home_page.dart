@@ -14,6 +14,7 @@ import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
 import 'package:cbt_app/utils/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/page_transitions.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -395,15 +396,24 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       Navigator.pop(context); // Close loading
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => QuizPage(exam: examModel)),
-      ).then((_) => _refreshUjianList());
-    } on SocketException {
-      // Offline and not downloaded — show error
-      if (!mounted) return;
-      Navigator.pop(context); // Close loading
-      _showOfflineError(examName);
+      // Check both local block (SharedPreferences) and server block
+      if (blockStatus || examParticipant.isBlocked) {
+        // Sync local block status if server says blocked
+        if (examParticipant.isBlocked && !blockStatus) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool("blockKey ${examParticipant.exam.examId}", true);
+        }
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          fadeSlideRoute(QuizBlockedPage(examName: examName)),
+        );
+      } else {
+        Navigator.push(
+          context,
+          fadeSlideRoute(QuizPage(exam: examModel)),
+        ).then((_) => _refreshUjianList());
+      }
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading

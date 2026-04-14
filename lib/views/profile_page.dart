@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../style/style.dart';
 import '../services/profile_service.dart';
+import '../utils/page_transitions.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -76,7 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
             if (!context.mounted) return;
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const Loginpage()),
+              fadeSlideRoute(const Loginpage()),
               (route) => false,
             );
           },

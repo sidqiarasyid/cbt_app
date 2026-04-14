@@ -6,6 +6,7 @@ import 'package:cbt_app/services/login_service.dart';
 import 'package:cbt_app/utils/session_manager.dart';
 import 'package:cbt_app/utils/url.dart';
 import 'package:cbt_app/views/login_page.dart';
+import 'package:cbt_app/utils/page_transitions.dart';
 
 class AuthController {
   final LoginService _loginService = LoginService();
@@ -71,7 +72,7 @@ class AuthController {
   void navigateToLogin(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const Loginpage()),
+      fadeSlideRoute(const Loginpage()),
       (route) => false,
     );
   }

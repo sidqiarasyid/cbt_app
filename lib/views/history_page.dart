@@ -5,6 +5,7 @@ import 'package:cbt_app/widgets/history_card.dart';
 import 'package:cbt_app/widgets/loading_state.dart';
 import 'package:cbt_app/widgets/error_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -210,7 +211,19 @@ class _HistoryPageState extends State<HistoryPage> {
               });
             },
           ),
-        );
+        )
+            .animate()
+            .fadeIn(
+              delay: Duration(milliseconds: 50 * index),
+              duration: 350.ms,
+            )
+            .slideY(
+              begin: 0.12,
+              end: 0,
+              delay: Duration(milliseconds: 50 * index),
+              duration: 350.ms,
+              curve: Curves.easeOutCubic,
+            );
       },
     );
   }

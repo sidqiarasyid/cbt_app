@@ -19,6 +19,7 @@ import 'package:cbt_app/widgets/unanswered_warning_dialog.dart';
 import 'package:cbt_app/widgets/unanswered_finish_warning_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/page_transitions.dart';
 
 
 class QuizPage extends StatefulWidget {
@@ -151,8 +152,8 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (context) => QuizBlockedPage(
+      fadeSlideRoute(
+        QuizBlockedPage(
           examName: widget.exam.subject,
           violationTime: DateTime.now(),
         ),
@@ -618,8 +619,8 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
             if (!mounted) return;
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (context) => QuizBlockedPage(
+              fadeSlideRoute(
+                QuizBlockedPage(
                   examName: widget.exam.subject,
                   violationTime: DateTime.now(),
                 ),
@@ -762,8 +763,8 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
       
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => QuizEndPage(
+        fadeSlideRoute(
+          QuizEndPage(
             exam: widget.exam,
             submittedAt: DateTime.now(),
           ),
