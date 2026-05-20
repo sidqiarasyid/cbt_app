@@ -1,71 +1,106 @@
 # CBT Mobile App
 
-Mobile application for students to take Computer-Based Tests (CBT), built with Flutter. Students can take exams, view results, and manage their profile.
+Native mobile application for students to take Computer-Based Tests (CBT). Students can view assigned exams, take exams with auto-save, view results, and manage profiles.
+
+**Built with:** Flutter 3.9+ | Dart SDK 3.9.2+ | HTTP client | SharedPreferences
+
+---
 
 ## Features
 
 ### Exam Taking
-- **Exam List** — View assigned exams (SCHEDULED, ONGOING)
-- **Start Exam** — Start exam session, receive question list from server
-- **Auto-Save** — Answers automatically saved to server on selection
-- **Question Types** — Single Choice, Multiple Choice, Essay
-- **Countdown Timer** — Timer based on global `end_date` deadline
+- **Exam List** — View all assigned exams with status (SCHEDULED, ONGOING)
+- **Start Exam** — Begin exam session, receive question list from server
+- **Auto-Save Answers** — Submit answers to server automatically on selection (no manual submit)
+- **Question Types** — Single Choice, Multiple Choice, Essay text response
+- **Countdown Timer** — Real-time timer based on global `end_date` deadline
+- **Question Navigation** — View all questions at once, jump to any question
+- **Progress Tracking** — Visual indicator of answered/unanswered questions
+- **Beautified Dialogs** — Gradient icons, rounded corners, shadow effects on all exam dialogs
 - **Auto-Finish** — Exam auto-finishes when timer expires (client-side + server-side backup)
-- **Question Picker** — Navigate between questions, see answered/unanswered status
-- **Unanswered Warning** — Warning when finishing with unanswered questions
-- **Beautified Dialogs** — Consistent dialog design system with gradient icons, rounded corners, and shadow effects across all exam-related dialogs
+- **Unanswered Warning** — Alert dialog before finishing with unanswered questions
 
 ### Anti-Cheat System
-- **Background Detection** — If app is backgrounded for >10 seconds → auto-block
-- **Inactive State Detection** — Detects `AppLifecycleState.inactive` with 300ms debounce to prevent false positives from system overlays
-- **Blocked Page** — Dedicated page shown when student is blocked
+- **Background Detection** — App running time tracked; block if backgrounded >10 seconds
+- **Inactive State Detection** — Detects system overlay (AppLifecycleState.inactive) with 300ms debounce
+- **Blocked Page** — Dedicated UI shown when student is blocked from exam
 - **Unlock Code** — Requires unlock code from exam supervisor (generated via admin dashboard)
+- **Persistent State** — Block status persists in local storage (SharedPreferences)
 
 ### History & Results
-- **History Tab** — List of completed exams with scores
-- **Result Detail** — Final score, submission date
+- **History Tab** — List of completed exams with final scores
+- **Result Detail** — Final score, submission timestamp, question breakdown
+- **Download Results** — Export results (optional feature)
 
-### Profile
-- **View Profile** — Name, classroom, grade level, major
-- **Edit Profile** — Update name and profile photo
+### Profile Management
+- **View Profile** — Display name, classroom, grade level, major, profile photo
+- **Edit Profile** — Update name and upload new profile photo
+- **Account Settings** — Change password, manage notifications
+- **Session Logout** — Clear JWT token and return to login screen
+
+### Authentication
+- **Login Screen** — Username and password authentication via backend
+- **Session Management** — JWT token stored in secure local storage
+- **Auto-Login** — Resume session if token still valid
 - **Logout** — Clear session and return to login
+
+---
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Framework | Flutter (Dart SDK ^3.9.2) |
-| HTTP Client | http ^1.6.0 |
-| Local Storage | shared_preferences ^2.5.4 |
-| Date Formatting | intl ^0.20.2 |
-| Image Picker | image_picker ^1.2.1 |
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Framework | Flutter | 3.9+ |
+| Language | Dart | 3.9.2+ |
+| HTTP Client | http | 1.6.0+ |
+| Local Storage | shared_preferences | 2.5.4+ |
+| Date Formatting | intl | 0.20.2+ |
+| Image Picker | image_picker | 1.2.1+ |
+| State Management | - (Manual StatefulWidget) | — |
 
-## Setup
+---
 
-### Prerequisites
+## Prerequisites
 
-- Flutter SDK 3.9+
-- Android Studio or VS Code with Flutter extension
-- Android Emulator or physical device
-- CBT Backend API running at `http://localhost:3000`
+- **Flutter SDK** v3.9.0 or higher
+- **Dart SDK** v3.9.2 or higher (included with Flutter)
+- **Android Studio** or **VS Code** with Flutter extension
+- **Android Emulator** or **Physical Android Device**
+- **CBT Backend API** running at `http://localhost:3000` (or configured server)
 
-### Installation
+**Verify installation:**
+```bash
+flutter --version
+dart --version
+flutter doctor
+```
+
+---
+
+## Installation & Setup
+
+### 1. Clone Repository
 
 ```bash
 cd cbt_app
+```
+
+### 2. Install Dependencies
+
+```bash
 flutter pub get
 ```
 
-### API URL Configuration
+### 3. Configure API URL
 
 Edit `lib/utils/url.dart`:
 
 ```dart
 class Url {
-  static const bool useEmulator = true;           // true for emulator, false for device
-  static const String _localIP = "192.168.x.x";  // Your computer's IP
+  static const bool useEmulator = true;           // true for Android emulator, false for physical device
+  static const String _localIP = "192.168.18.x";  // Your computer's local IP (find via ipconfig)
   static const String _port = "3000";
-  static const String _emuHost = "10.0.2.2";     // Android emulator → host
+  static const String _emuHost = "10.0.2.2";     // Android emulator gateway to host machine
 
   static String get baseUrl {
     final host = useEmulator ? _emuHost : _localIP;
@@ -74,21 +109,163 @@ class Url {
 }
 ```
 
-- **Android Emulator**: Set `useEmulator = true` (uses `10.0.2.2` which maps to host machine)
-- **Physical Device**: Set `useEmulator = false`, replace `_localIP` with your computer's local IP
+**Configuration Guide:**
 
-### Running the App
+**Android Emulator:**
+- Set `useEmulator = true`
+- Uses `10.0.2.2` (special emulator IP that maps to host machine)
+- Backend must be running on host machine at `localhost:3000`
+
+**Physical Android Device:**
+- Set `useEmulator = false`
+- Replace `_localIP` with your computer's local network IP
+  - Find IP: Open CMD/PowerShell on Windows → `ipconfig` → look for IPv4 under "Ethernet adapter" or "Wireless LAN adapter"
+  - Example: `192.168.18.8`
+- Device must be on same WiFi network as computer
+- Backend must be running on computer at that IP:3000
+
+### 4. Set Up Android Emulator (Optional)
 
 ```bash
-# Debug mode
-flutter run
+# List available emulators
+flutter emulators
 
-# Release mode
-flutter run --release
+# Launch emulator
+flutter emulators --launch emulator-name
 
-# Build APK
-flutter build apk
+# Verify connection
+flutter devices
 ```
+
+---
+
+## Running the Application
+
+### Debug Mode (Development)
+
+```bash
+flutter run
+```
+
+- Hot reload enabled (press `r` to reload, `R` to restart)
+- Debug console output visible
+- Performance profiling available
+
+### Release Mode
+
+```bash
+flutter run --release
+```
+
+- Optimized performance
+- No debug output
+- For user testing
+
+### Build APK (Android Package)
+
+```bash
+# Debug APK
+flutter build apk
+
+# Release APK (optimized)
+flutter build apk --release
+```
+
+APK file: `build/app/outputs/flutter-apk/app-release.apk`
+
+---
+
+## Useful Commands
+
+```bash
+flutter pub get              # Install dependencies
+flutter pub upgrade          # Update dependencies to latest
+flutter run                  # Debug mode on connected device/emulator
+flutter run --release        # Release mode
+flutter build apk            # Build release APK
+flutter clean                # Clean build artifacts
+flutter doctor               # Check environment setup
+flutter devices              # List connected devices
+flutter logs                 # View app logs in terminal
+```
+
+---
+
+## Project Structure
+
+```
+cbt_app/
+├── pubspec.yaml                     # Dependencies and project metadata
+├── analysis_options.yaml            # Dart linter config
+├── devtools_options.yaml
+├── README.md                        # This file
+│
+├── lib/
+│   ├── main.dart                    # App entry point
+│   │
+│   ├── controllers/                 # State + business logic
+│   │   ├── auth_controller.dart
+│   │   ├── exam_controller.dart
+│   │   ├── student_controller.dart
+│   │   └── ...
+│   │
+│   ├── services/                    # HTTP API calls to backend
+│   │   ├── auth_service.dart        # Login, logout, profile
+│   │   ├── exam_service.dart        # Get exams, submit answers
+│   │   └── ...
+│   │
+│   ├── models/                      # Data classes (fromJson factory constructors)
+│   │   ├── user.dart
+│   │   ├── exam.dart
+│   │   ├── question.dart
+│   │   ├── answer.dart
+│   │   └── ...
+│   │
+│   ├── views/                       # StatefulWidget pages/screens
+│   │   ├── login_page.dart
+│   │   ├── exam_list_page.dart
+│   │   ├── quiz_page.dart
+│   │   ├── result_page.dart
+│   │   ├── profile_page.dart
+│   │   └── ...
+│   │
+│   ├── widgets/                     # Reusable UI components
+│   │   ├── custom_button.dart
+│   │   ├── custom_dialog.dart
+│   │   ├── question_card.dart
+│   │   ├── timer_widget.dart
+│   │   └── ...
+│   │
+│   ├── utils/
+│   │   ├── url.dart                 # API URL configuration (local IP setup)
+│   │   ├── session_manager.dart     # JWT token storage via SharedPreferences
+│   │   ├── constants.dart           # App constants, colors, strings
+│   │   └── ...
+│   │
+│   └── providers/ (optional)        # State management (if using Provider/Riverpod)
+│
+├── android/                         # Android-specific config
+│   ├── app/build.gradle.kts
+│   └── local.properties             # Android SDK path (auto-generated)
+│
+├── ios/                             # iOS-specific config (if needed)
+│
+├── test/                            # Unit tests
+│   └── widget_test.dart
+│
+└── web/                             # Web support (optional)
+```
+
+### Key Files
+
+- **`lib/main.dart`** — App initialization, theme, root navigation
+- **`lib/utils/url.dart`** — API endpoint configuration (emulator vs device)
+- **`lib/utils/session_manager.dart`** — JWT token persistence via SharedPreferences
+- **`lib/views/quiz_page.dart`** — Main exam-taking interface
+- **`lib/controllers/exam_controller.dart`** — Exam state management + auto-save logic
+- **`lib/services/exam_service.dart`** — HTTP calls to backend for exam data
+
+---
 
 ## Coding Standards
 
@@ -97,7 +274,79 @@ flutter build apk
 | Context | Convention | Example |
 |---------|-----------|---------|
 | Dart File | snake_case | `quiz_page.dart`, `exam_controller.dart` |
-| Class | PascalCase | `ExamController`, `QuizPage` |
+| Dart Class | PascalCase | `ExamController`, `QuizPage`, `CustomButton` |
+| Dart Variable | camelCase | `currentExam`, `questionList`, `studentScore` |
+| Dart Function | camelCase | `getMyExams()`, `startExam()`, `submitAnswer()` |
+| Model Field | camelCase (Dart), snake_case (JSON) | Dart: `endDate`, JSON: `end_date` |
+| Constant | UPPER_SNAKE or PascalCase | `API_TIMEOUT`, `Colors.PRIMARY` |
+
+### JSON Serialization
+
+All models must have `fromJson()` factory constructor to parse backend responses:
+
+```dart
+class Exam {
+  final int examId;
+  final String examName;
+  final DateTime endDate;
+
+  Exam({
+    required this.examId,
+    required this.examName,
+    required this.endDate,
+  });
+
+  factory Exam.fromJson(Map<String, dynamic> json) {
+    return Exam(
+      examId: json['exam_id'],
+      examName: json['exam_name'],
+      endDate: DateTime.parse(json['end_date']),
+    );
+  }
+}
+```
+
+### State Management
+
+- Use `StatefulWidget` + `setState()` for simple component state
+- Use `Provider` or `Riverpod` for global app state (if added later)
+- Persistent data (JWT token, user ID) → `SharedPreferences` via `SessionManager`
+
+### HTTP Requests
+
+All API calls use `http` package:
+
+```dart
+import 'package:http/http.dart' as http;
+import '../utils/url.dart';
+
+class ExamService {
+  static Future<List<Exam>> getMyExams() async {
+    final token = await SessionManager.getToken();
+    final response = await http.get(
+      Uri.parse('${Url.baseUrl}/student/my-exams'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      return List<Exam>.from(
+        jsonData['exams'].map((e) => Exam.fromJson(e))
+      );
+    } else {
+      throw Exception('Failed to load exams');
+    }
+  }
+}
+```
+
+### Best Practices
+
+- **Async operations** → Use `FutureBuilder` or `async`/`await` in controller
+- **Error handling** → Catch exceptions, show user-friendly error dialogs
+- **Performance** → Minimize rebuilds with `const` constructors
+- **Security** → Never hardcode credentials; use environment/config files
+- **Logging** → Use `debugPrint()` for development debugging
 | Function/Method | camelCase | `startExam()`, `submitAnswer()` |
 | Variable | camelCase | `examList`, `isLoading` |
 | Constant | camelCase or UPPER_SNAKE | `baseUrl`, `_port` |
