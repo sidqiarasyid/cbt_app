@@ -258,7 +258,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Profile details card
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 118),
                 child: Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),

@@ -99,7 +99,7 @@ class ExamListSection extends StatelessWidget {
                   ),
                 )
               : ListView.separated(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, 118),
                   itemCount: examList.length,
                   itemBuilder: (context, index) {
                     final examParticipant = examList[index];

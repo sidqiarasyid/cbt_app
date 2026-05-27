@@ -97,32 +97,31 @@ Edit `lib/utils/url.dart`:
 
 ```dart
 class Url {
-  static const bool useEmulator = true;           // true for Android emulator, false for physical device
-  static const String _localIP = "192.168.18.x";  // Your computer's local IP (find via ipconfig)
+  static const bool useNgrok    = false;           // true  → internet APK (Firebase App Distribution)
+  static const bool useEmulator = true;            // true  → emulator | false → physical device
+  static const String _localIP  = "192.168.18.x"; // your computer's IP (ipconfig → IPv4)
+  static const String _ngrokHost = "cbt-be.ngrok-free.app"; // replace with your ngrok static domain
   static const String _port = "3000";
-  static const String _emuHost = "10.0.2.2";     // Android emulator gateway to host machine
-
-  static String get baseUrl {
-    final host = useEmulator ? _emuHost : _localIP;
-    return "http://$host:$_port/api";
-  }
 }
 ```
 
 **Configuration Guide:**
 
-**Android Emulator:**
-- Set `useEmulator = true`
-- Uses `10.0.2.2` (special emulator IP that maps to host machine)
-- Backend must be running on host machine at `localhost:3000`
+**Android Emulator (local dev):**
+- `useNgrok = false`, `useEmulator = true`
+- Uses `10.0.2.2` — Android emulator gateway that maps to host machine `localhost`
+- Backend must be running at `localhost:3000`
 
-**Physical Android Device:**
-- Set `useEmulator = false`
-- Replace `_localIP` with your computer's local network IP
-  - Find IP: Open CMD/PowerShell on Windows → `ipconfig` → look for IPv4 under "Ethernet adapter" or "Wireless LAN adapter"
-  - Example: `192.168.18.8`
-- Device must be on same WiFi network as computer
-- Backend must be running on computer at that IP:3000
+**Physical Device on same WiFi:**
+- `useNgrok = false`, `useEmulator = false`
+- Set `_localIP` to your computer's IPv4 (`ipconfig`)
+- Device and computer must be on the same network
+
+**APK distributed via Firebase App Distribution (internet):**
+- `useNgrok = true` — app calls `https://<_ngrokHost>/api` (no port, HTTPS via ngrok)
+- Replace `_ngrokHost` with your reserved static domain
+- `flutter build apk --release`, upload to Firebase App Distribution
+- Full guide: [NGROK-FIREBASE-SETUP.md](../NGROK-FIREBASE-SETUP.md)
 
 ### 4. Set Up Android Emulator (Optional)
 

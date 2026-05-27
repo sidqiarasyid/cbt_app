@@ -182,7 +182,7 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget _buildHistoryList(List<ResultEntry> historyList) {
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 118),
       itemCount: historyList.length,
       itemBuilder: (context, index) {
         final item = historyList[index];

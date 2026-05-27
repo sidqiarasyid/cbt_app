@@ -5,6 +5,7 @@ import 'package:cbt_app/controllers/exam_controller.dart';
 import 'package:cbt_app/services/offline_exam_storage.dart';
 import 'package:cbt_app/services/offline_sync_service.dart';
 import 'package:cbt_app/widgets/start_dialog.dart';
+import 'package:cbt_app/widgets/download_dialog.dart';
 import 'package:cbt_app/widgets/home_header.dart';
 import 'package:cbt_app/widgets/exam_list_section.dart';
 import 'package:cbt_app/widgets/loading_state.dart';
@@ -193,65 +194,14 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Icon(Icons.download_rounded, color: Color(0xFF4CAF50)),
-              SizedBox(width: 8),
-              Expanded(child: Text('Unduh Ujian', style: TextStyle(fontSize: 18))),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                examName,
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-              ),
-              SizedBox(height: 8),
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700, size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Timer ujian akan mulai berjalan setelah diunduh. Pastikan Anda siap mengerjakan.',
-                        style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Batal', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                _downloadExamWithAPI(examParticipant, examName, startDate);
-              },
-              icon: Icon(Icons.download_rounded, size: 18),
-              label: Text('Unduh Sekarang'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF4CAF50),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ],
+        return DownloadDialog(
+          examName: examName,
+          startDate: examParticipant.exam.startDate,
+          endDate: examParticipant.exam.endDate,
+          onConfirm: () {
+            Navigator.pop(context);
+            _downloadExamWithAPI(examParticipant, examName, startDate);
+          },
         );
       },
     );
@@ -349,6 +299,14 @@ class _HomePageState extends State<HomePage> {
     final examId = examParticipant.exam.examId;
 
     try {
+      // Validate trusted time before allowing entry. This prevents clock
+      // tampering: device time alone is not enough to determine whether the
+      // exam window is open.
+      await _controller.ensureExamWindowOpen(
+        startDate: examParticipant.exam.startDate,
+        endDate: examParticipant.exam.endDate,
+      );
+
       // Check block status first (works offline via SharedPreferences)
       final blockStatus = await _controller.checkBlockStatus(examId);
 

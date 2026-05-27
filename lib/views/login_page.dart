@@ -89,6 +89,10 @@ class _LoginpageState extends State<Loginpage> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardOpen = keyboardHeight > 0;
+    const animDuration = Duration(milliseconds: 280);
+    const animCurve = Curves.easeOutCubic;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -139,70 +143,106 @@ class _LoginpageState extends State<Loginpage> {
 
           // ── Content ──
           SafeArea(
-            child: Column(
-              children: [
-                // ── Static header area (blue zone) ──
-                SizedBox(height: size.height * 0.15),
-                // Logo / school icon
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    color: Color(0x33FFFFFF),
-                    shape: BoxShape.circle,
-                    border: Border.fromBorderSide(
-                      BorderSide(color: Color(0x4DFFFFFF), width: 2),
-                    ),
+            child: AnimatedPadding(
+              duration: animDuration,
+              curve: animCurve,
+              padding: EdgeInsets.only(bottom: keyboardHeight),
+              child: Column(
+                children: [
+                  // ── Static header area (blue zone) — collapses on keyboard ──
+                  AnimatedContainer(
+                    duration: animDuration,
+                    curve: animCurve,
+                    height: isKeyboardOpen ? size.height * 0.1 : size.height * 0.15,
                   ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/sekolah.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.school_rounded,
-                        size: 40,
-                        color: Colors.white,
+                  // Logo / school icon
+                  AnimatedScale(
+                    duration: animDuration,
+                    curve: animCurve,
+                    scale: isKeyboardOpen ? 0.7 : 1.0,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: Color(0x33FFFFFF),
+                        shape: BoxShape.circle,
+                        border: Border.fromBorderSide(
+                          BorderSide(color: Color(0x4DFFFFFF), width: 2),
+                        ),
                       ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/sekolah.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.school_rounded,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ).animate().fadeIn(duration: 500.ms).scale(
+                          begin: const Offset(0.7, 0.7),
+                          end: const Offset(1, 1),
+                          duration: 500.ms,
+                          curve: Curves.easeOutBack,
+                        ),
+                  ),
+                  AnimatedContainer(
+                    duration: animDuration,
+                    curve: animCurve,
+                    height: isKeyboardOpen ? 6 : 16,
+                  ),
+                  AnimatedSize(
+                    duration: animDuration,
+                    curve: animCurve,
+                    child: AnimatedOpacity(
+                      duration: animDuration,
+                      curve: animCurve,
+                      opacity: isKeyboardOpen ? 0.0 : 1.0,
+                      child: isKeyboardOpen
+                          ? const SizedBox.shrink()
+                          : Column(
+                              children: [
+                                Text(
+                                  _schoolName,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1,
+                                  ),
+                                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(
+                                      begin: 0.3,
+                                      end: 0,
+                                      delay: 200.ms,
+                                      duration: 400.ms,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'Sign into your Account',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Color(0xE6FFFFFF),
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
+                              ],
+                            ),
                     ),
                   ),
-                ).animate().fadeIn(duration: 500.ms).scale(
-                      begin: const Offset(0.7, 0.7),
-                      end: const Offset(1, 1),
-                      duration: 500.ms,
-                      curve: Curves.easeOutBack,
-                    ),
-                const SizedBox(height: 16),
-                Text(
-                  _schoolName,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1,
-                  ),
-                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(
-                      begin: 0.3,
-                      end: 0,
-                      delay: 200.ms,
-                      duration: 400.ms,
-                      curve: Curves.easeOutCubic,
-                    ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Sign into your Account',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xE6FFFFFF),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
 
-                // ── Scrollable form area ──
-                SizedBox(height: size.height * 0.10),
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
-                    child: Padding(
+                  // ── Scrollable form area ──
+                  AnimatedContainer(
+                    duration: animDuration,
+                    curve: animCurve,
+                    height: isKeyboardOpen ? 24 : size.height * 0.10,
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: Column(
                         children: [
@@ -258,8 +298,8 @@ class _LoginpageState extends State<Loginpage> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
