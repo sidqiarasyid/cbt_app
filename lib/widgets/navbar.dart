@@ -1,4 +1,3 @@
-import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
 
 class NavBar extends StatefulWidget {
@@ -64,70 +63,20 @@ class _NavBarState extends State<NavBar> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: _navHeight + 20, // extra space for elevated circle
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Nav bar background — matches page background with drop shadow
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  height: _navHeight,
-                  margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                  decoration: BoxDecoration(
-                    color: ColorsApp.backgroundColor,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 28,
-                        spreadRadius: 0,
-                        offset: const Offset(0, -4),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 10,
-                        spreadRadius: -2,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Nav items
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 8,
-                child: SizedBox(
-                  height: _navHeight + 20,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(_items.length, (index) {
-                      final isActive = widget.selectedIndex == index;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => widget.onItemTapped(index),
-                          behavior: HitTestBehavior.opaque,
-                          child: _buildNavItem(index, isActive),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return SizedBox(
+      height: _navHeight,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(_items.length, (index) {
+          final isActive = widget.selectedIndex == index;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => widget.onItemTapped(index),
+              behavior: HitTestBehavior.opaque,
+              child: _buildNavItem(index, isActive),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -136,18 +85,19 @@ class _NavBarState extends State<NavBar> with TickerProviderStateMixin {
     return _NavAnimBuilder(
       animation: _animController,
       builder: (context, child) {
-        final isAnimating = widget.selectedIndex == index && _animController.isAnimating;
+        final isAnimating =
+            widget.selectedIndex == index && _animController.isAnimating;
         final scale = isAnimating ? _bounceAnimation.value : 1.0;
 
         return SizedBox(
-          height: _navHeight + 20,
+          height: _navHeight,
           child: Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.bottomCenter,
             children: [
-              // Icon circle
+              // Icon circle (rises above the pill when active)
               Positioned(
-                bottom: isActive ? 38 : 22,
+                bottom: isActive ? 30 : 14,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,
@@ -181,7 +131,7 @@ class _NavBarState extends State<NavBar> with TickerProviderStateMixin {
               ),
               // Label
               Positioned(
-                bottom: isActive ? 8 : 6,
+                bottom: isActive ? 6 : 4,
                 child: AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(

@@ -3,6 +3,7 @@ import 'package:cbt_app/controllers/auth_controller.dart';
 import 'package:cbt_app/services/profile_service.dart';
 import 'package:cbt_app/style/style.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_floating_bottom_bar/flutter_floating_bottom_bar.dart';
 
 // Import widgets
 import 'widgets/navbar.dart';
@@ -121,16 +122,47 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      extendBody: true,
       backgroundColor: ColorsApp.backgroundColor,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: NavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
+      body: BottomBar(
+        showIcon: false,
+        layout: BottomBarLayout(
+          width: screenWidth - 40,
+          offset: 16,
+          borderRadius: BorderRadius.circular(28),
+          clip: Clip.none,
+          respectSafeArea: true,
+        ),
+        theme: BottomBarThemeData(
+          barDecoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 24,
+                spreadRadius: 0,
+                offset: const Offset(0, -2),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                spreadRadius: -2,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+        scrollBehavior: const BottomBarScrollBehavior(hideOnScroll: false),
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: _pages,
+        ),
+        child: NavBar(
+          selectedIndex: _selectedIndex,
+          onItemTapped: _onItemTapped,
+        ),
       ),
     );
   }
