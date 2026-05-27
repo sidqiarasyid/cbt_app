@@ -8,6 +8,7 @@ import 'package:cbt_app/models/exam_result_response_model.dart';
 import 'package:cbt_app/services/exam_service.dart';
 import 'package:cbt_app/services/offline_exam_storage.dart';
 import 'package:cbt_app/services/offline_sync_service.dart';
+import 'package:cbt_app/services/time_service.dart';
 import 'package:cbt_app/utils/helpers.dart';
 
 class UjianController {
@@ -26,16 +27,46 @@ class UjianController {
 
   /// Mengunduh data ujian (soal + opsi) untuk disimpan secara offline.
   /// Memanggil startExam API → cache data ke SharedPreferences.
-  /// Timer mulai berjalan dari sini.
+  /// Juga merekam offset waktu server untuk validasi tepercaya saat memulai
+  /// ujian secara offline nanti (mencegah cheating dengan mengubah jam perangkat).
   Future<ExamModel> downloadExam(
     ExamParticipant examParticipant,
     String examName,
     DateTime startDate,
   ) async {
+    // Best-effort: capture trusted server time offset for later offline starts.
+    // If this fails the download still proceeds — startExam below requires
+    // network anyway and the backend validates the time window server-side.
+    try {
+      await TimeService.fetchServerTime();
+    } catch (_) {}
+
     final examModel = await startExam(examParticipant, examName, startDate);
     // Tandai bahwa ujian sudah diunduh
     await OfflineExamStorage.markExamDownloaded(examParticipant.exam.examId);
     return examModel;
+  }
+
+  /// Memvalidasi bahwa ujian masih dalam jendela waktunya menggunakan waktu
+  /// tepercaya (server). Strategi: coba ambil waktu server; jika gagal, pakai
+  /// offset yang tersimpan saat unduh. Jika tidak ada keduanya, lempar error
+  /// — siswa harus terhubung ke internet sekali sebelum memulai.
+  Future<void> ensureExamWindowOpen({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final trusted = await TimeService.trustedNow();
+    if (trusted == null) {
+      throw Exception(
+        'Tidak dapat memverifikasi waktu. Hubungkan ke internet sekali untuk memulai ujian.',
+      );
+    }
+    if (trusted.isBefore(startDate)) {
+      throw Exception('Ujian belum dimulai. Tunggu hingga jadwal yang ditentukan.');
+    }
+    if (trusted.isAfter(endDate)) {
+      throw Exception('Waktu ujian sudah berakhir.');
+    }
   }
 
   /// Memulai ujian dari cache offline (jika tersedia).
