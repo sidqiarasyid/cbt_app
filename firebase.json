@@ -1,0 +1,7 @@
+{
+  "appDistribution": {
+    "appId": "1:1011876777198:android:0b2daadf90ae801ddcb7ff",
+    "groups": ["testers"],
+    "releaseNotesFile": "release-notes.txt"
+  }
+}
