@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:cbt_app/models/quiz_model.dart';
 import 'package:cbt_app/models/exam_model.dart';
 import 'package:cbt_app/views/quiz_blocked_page.dart';
@@ -10,7 +11,6 @@ import 'package:cbt_app/views/quiz_multiple_choice_page.dart';
 import 'package:cbt_app/services/exam_service.dart';
 import 'package:cbt_app/services/offline_exam_storage.dart';
 import 'package:cbt_app/services/offline_sync_service.dart';
-import 'package:cbt_app/style/style.dart';
 import 'package:cbt_app/widgets/dialogs/exit_all_answered_dialog.dart';
 import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
 import 'package:cbt_app/widgets/end_quiz_dialog.dart';
@@ -18,6 +18,8 @@ import 'package:cbt_app/widgets/finish_quiz_dialog.dart';
 import 'package:cbt_app/widgets/unanswered_warning_dialog.dart';
 import 'package:cbt_app/widgets/unanswered_finish_warning_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/page_transitions.dart';
 
@@ -43,6 +45,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   bool _isOffline = false;
   Timer? _inactiveTimer;
   Timer? _connectivityTimer;
+  int _initialDurationSeconds = 0;
 
   @override
   void initState() {
@@ -184,6 +187,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
       _autoFinishUjian();
     } else {
       _remainingTime = remaining;
+      _initialDurationSeconds = remaining.inSeconds;
       _startCountdown();
     }
   }
@@ -847,9 +851,10 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
       context,
       MaterialPageRoute(
         builder: (pickerContext) => QuizPicker(
-          quizList: qList, 
+          quizList: qList,
           currItem: curItem,
           exam: widget.exam,
+          initialRemainingTime: _remainingTime,
           onFinishQuiz: () async {
             // Close picker
             Navigator.pop(pickerContext);
@@ -895,215 +900,471 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
       currentQuestion = 0;
     }
     
+    final quiz = widget.exam.quizList[currentQuestion];
+    final totalQuestions = widget.exam.quizList.length;
+    final isLast = currentQuestion + 1 >= totalQuestions;
+    final unansweredCount = widget.exam.quizList.where((q) => !q.hasAnswer).length;
+    final timeLow = _remainingTime.inMinutes < 5;
+    final timeCritical = _remainingTime.inMinutes < 1;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F9FC),
       body: SafeArea(
-        child: Column(
+        bottom: false,
+        child: Stack(
           children: [
-            Container(
-              padding: EdgeInsets.all(10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          _showExitConfirmation();
-                        },
-                        icon: Icon(Icons.arrow_back),
-                        iconSize: 30,
-                      ),
-                      Text(
-                        "Question ${currentQuestion + 1}",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+            Column(
+              children: [
+                _buildHeader(quiz, totalQuestions, unansweredCount, timeLow, timeCritical),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 240),
+                      transitionBuilder: (child, anim) => FadeTransition(
+                        opacity: anim,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.05, 0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+                          child: child,
                         ),
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      // Offline indicator
-                      if (_isOffline)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          margin: EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[100],
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.orange),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.cloud_off, size: 14, color: Colors.orange[800]),
-                              SizedBox(width: 4),
-                              Text('Offline', style: TextStyle(fontSize: 11, color: Colors.orange[800], fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
-                      Container(
-                        constraints: BoxConstraints(minWidth: 80),
-                        alignment: Alignment.center,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            width: 1, 
-                            color: _remainingTime.inMinutes < 5 ? Colors.red : Colors.black
-                          ),
-                        ),
-                        child: Text(
-                          _formatTime(_remainingTime),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: _remainingTime.inMinutes < 5 ? Colors.red : Colors.black,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          navigatePicker(
-                            context,
-                            widget.exam.quizList,
-                            currentQuestion,
-                          );
-                        },
-                        icon: Icon(Icons.grid_view_outlined, size: 30),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    widget.exam.quizList[currentQuestion].quizType == "ESSAY" 
-                      ? QuizEssayPage(                          key: ValueKey('essay_${widget.exam.quizList[currentQuestion].questionId}_$currentQuestion'),                          question: ques, 
-                          controller: essayController,
-                          questionImage: widget.exam.quizList[currentQuestion].image,
-                          onChanged: () {
-                            // Auto-save essay after debounce
-                            _submitAnswer();
-                          },
-                        ) 
-                      : QuizPilganPage(
-                          key: ValueKey('soal_${widget.exam.quizList[currentQuestion].questionId}_$currentQuestion'),
-                          question: ques, 
-                          answerList: answer,
-                          questionImage: widget.exam.quizList[currentQuestion].image,
-                          initialSelectedIndex: widget.exam.quizList[currentQuestion].selectedAnswerIndex,
-                          initialSelectedIndices: widget.exam.quizList[currentQuestion].selectedAnswerIndices,
-                          isMultipleChoice: widget.exam.quizList[currentQuestion].quizType == "MULTIPLE_CHOICE",
-                          onAnswerSelected: (selectedIndex, {selectedIndices}) {
-                            _onAnswerSelected(selectedIndex, selectedIndices: selectedIndices);
-                          },
-                        ),  
-                    // Navigation Buttons
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                      child: Row(
-                        children: [
-                          // Previous Button
-                          if (currentQuestion > 0)
-                            Expanded(
-                              child: SizedBox(
-                                height: 50,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    backgroundColor: Colors.grey[300],
-                                    padding: EdgeInsets.symmetric(horizontal: 8),
-                                  ),
-                                  onPressed: previousQuestion,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.arrow_back, color: Colors.black87, size: 20),
-                                      SizedBox(width: 6),
-                                      Flexible(
-                                        child: Text(
-                                          "Sebelumnya",
-                                          style: TextStyle(
-                                            color: Colors.black87,
-                                            fontSize: 14,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          if (currentQuestion > 0)
-                            SizedBox(width: 10),
-                          // Next/Finish Button
-                          Expanded(
-                            child: SizedBox(
-                              height: 50,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  backgroundColor: currentQuestion + 1 >= widget.exam.quizList.length 
-                                    ? Colors.green 
-                                    : ColorsApp.primaryColor,
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                ),
-                                onPressed: nextQuestion,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        currentQuestion + 1 >= widget.exam.quizList.length 
-                                          ? "Selesaikan Ujian" 
-                                          : "Selanjutnya",
-                                        style: TextStyle(
-                                          color: ColorsApp.secondaryColor,
-                                          fontSize: 14,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Icon(
-                                      currentQuestion + 1 >= widget.exam.quizList.length 
-                                        ? Icons.check_circle 
-                                        : Icons.arrow_forward, 
-                                      color: ColorsApp.secondaryColor,
-                                      size: 20,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: KeyedSubtree(
+                        key: ValueKey('q_${quiz.questionId}_$currentQuestion'),
+                        child: _buildQuestionCard(quiz),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _buildBottomNav(isLast),
             ),
           ],
         ),
       ),
     );
   }
+
+  // ─── Header (sticky) ────────────────────────────────────────────────────
+  Widget _buildHeader(
+    dynamic quiz,
+    int totalQuestions,
+    int unansweredCount,
+    bool timeLow,
+    bool timeCritical,
+  ) {
+    const primary = Color(0xFF11B1E2);
+    final timerColor = timeCritical
+        ? const Color(0xFFEF4444)
+        : (timeLow ? const Color(0xFFF59E0B) : primary);
+    final timerProgress = _initialDurationSeconds == 0
+        ? 0.0
+        : (_remainingTime.inSeconds / _initialDurationSeconds).clamp(0.0, 1.0);
+
+    Widget timerChip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: timerColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: timerColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            timeCritical ? Icons.warning_amber_rounded : Icons.access_time_rounded,
+            size: 14,
+            color: timerColor,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            _formatTime(_remainingTime),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: timerColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (timeCritical) {
+      timerChip = timerChip
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .scale(
+            begin: const Offset(1, 1),
+            end: const Offset(1.05, 1.05),
+            duration: 600.ms,
+            curve: Curves.easeInOut,
+          );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: _showExitConfirmation,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  iconSize: 24,
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Soal ${currentQuestion + 1}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            ' / $totalQuestions',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        widget.exam.subject,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_isOffline) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.cloud_off_rounded, size: 12, color: Colors.orange[800]),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Offline',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.orange[800],
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                timerChip,
+                const SizedBox(width: 4),
+                _buildPickerButton(unansweredCount),
+              ],
+            ),
+          ),
+          // Linear time progress bar
+          SizedBox(
+            height: 3,
+            child: LinearProgressIndicator(
+              value: timerProgress,
+              backgroundColor: Colors.grey[100],
+              valueColor: AlwaysStoppedAnimation(timerColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPickerButton(int unansweredCount) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            navigatePicker(context, widget.exam.quizList, currentQuestion);
+          },
+          icon: const Icon(Icons.grid_view_rounded, size: 24),
+          color: Colors.black87,
+        ),
+        if (unansweredCount > 0)
+          Positioned(
+            right: 4,
+            top: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Text(
+                unansweredCount > 99 ? '99+' : '$unansweredCount',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ─── Question card ──────────────────────────────────────────────────────
+  Widget _buildQuestionCard(dynamic quiz) {
+    final typeMeta = _typeMeta(quiz.quizType);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top row: type chip + saved indicator
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: typeMeta.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(typeMeta.icon, size: 12, color: typeMeta.color),
+                    const SizedBox(width: 5),
+                    Text(
+                      typeMeta.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: typeMeta.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              if (quiz.hasAnswer)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle_rounded,
+                          size: 12, color: Color(0xFF22C55E)),
+                      const SizedBox(width: 4),
+                      Text(
+                        quiz.isSaved ? 'Tersimpan' : 'Menyimpan…',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF22C55E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Question body
+          quiz.quizType == "ESSAY"
+              ? QuizEssayPage(
+                  key: ValueKey('essay_${quiz.questionId}_$currentQuestion'),
+                  question: ques,
+                  controller: essayController,
+                  questionImage: quiz.image,
+                  onChanged: _submitAnswer,
+                )
+              : QuizPilganPage(
+                  key: ValueKey('soal_${quiz.questionId}_$currentQuestion'),
+                  question: ques,
+                  answerList: answer,
+                  questionImage: quiz.image,
+                  initialSelectedIndex: quiz.selectedAnswerIndex,
+                  initialSelectedIndices: quiz.selectedAnswerIndices,
+                  isMultipleChoice: quiz.quizType == "MULTIPLE_CHOICE",
+                  onAnswerSelected: (selectedIndex, {selectedIndices}) {
+                    _onAnswerSelected(selectedIndex, selectedIndices: selectedIndices);
+                  },
+                ),
+        ],
+      ),
+    );
+  }
+
+  _QuestionTypeMeta _typeMeta(String type) {
+    switch (type) {
+      case 'ESSAY':
+        return const _QuestionTypeMeta(
+          label: 'Esai',
+          icon: Icons.edit_note_rounded,
+          color: Color(0xFFA855F7),
+        );
+      case 'MULTIPLE_CHOICE':
+        return const _QuestionTypeMeta(
+          label: 'Pilihan Ganda Kompleks',
+          icon: Icons.checklist_rounded,
+          color: Color(0xFF0EA5E9),
+        );
+      case 'SINGLE_CHOICE':
+      default:
+        return const _QuestionTypeMeta(
+          label: 'Pilihan Ganda',
+          icon: Icons.radio_button_checked_rounded,
+          color: Color(0xFF11B1E2),
+        );
+    }
+  }
+
+  // ─── Bottom navigation (floating) ───────────────────────────────────────
+  Widget _buildBottomNav(bool isLast) {
+    const primary = Color(0xFF11B1E2);
+    const success = Color(0xFF22C55E);
+    final hasPrev = currentQuestion > 0;
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                if (hasPrev)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        previousQuestion();
+                      },
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      label: const Text(
+                        'Sebelumnya',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.black87,
+                        minimumSize: const Size.fromHeight(48),
+                        side: BorderSide(color: Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                if (hasPrev) const SizedBox(width: 10),
+                Expanded(
+                  flex: hasPrev ? 1 : 1,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      nextQuestion();
+                    },
+                    icon: Icon(
+                      isLast ? Icons.check_circle_rounded : Icons.arrow_forward_rounded,
+                      size: 18,
+                    ),
+                    label: Text(
+                      isLast ? 'Selesaikan Ujian' : 'Selanjutnya',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isLast ? success : primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestionTypeMeta {
+  final String label;
+  final IconData icon;
+  final Color color;
+  const _QuestionTypeMeta({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
 }
 
