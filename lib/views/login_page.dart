@@ -1,23 +1,23 @@
-import 'package:cbt_app/controllers/auth_controller.dart';
+import 'package:cbt_app/providers/auth_provider.dart';
 import 'package:cbt_app/services/school_profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
 import '../main.dart';
 import '../utils/page_transitions.dart';
 
-class Loginpage extends StatefulWidget {
-  const Loginpage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<Loginpage> createState() => _LoginpageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginpageState extends State<Loginpage> {
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController userController = TextEditingController();
   final TextEditingController passController = TextEditingController();
   bool isPasswordVisible = false;
   bool isLoading = false;
-  final AuthController _authController = AuthController();
   String _schoolName = 'CBT App';
 
   static const Color _primaryBlue = Color(0xFF11B1E2);
@@ -51,13 +51,15 @@ class _LoginpageState extends State<Loginpage> {
     setState(() => isLoading = true);
 
     try {
-      await _authController.login(
-          userController.text.trim(), passController.text);
+      await context.read<AuthProvider>().login(
+            userController.text.trim(),
+            passController.text,
+          );
 
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        fadeSlideRoute(MyHomePage()),
+        fadeSlideRoute(const MyHomePage()),
       );
     } catch (e) {
       if (!mounted) return;

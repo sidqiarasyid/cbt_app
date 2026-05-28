@@ -44,7 +44,7 @@ class LogoutDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Apakah anda yakin ingin keluar",
+              'Apakah anda yakin ingin keluar',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -66,7 +66,7 @@ class LogoutDialog extends StatelessWidget {
                     ),
                     onPressed: () => Navigator.pop(context),
                     child: const Text(
-                      "Batal",
+                      'Batal',
                       style: TextStyle(
                         color: Colors.black54,
                         fontSize: 15,
@@ -106,7 +106,7 @@ class LogoutDialog extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Keluar",
+                            'Keluar',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 15,

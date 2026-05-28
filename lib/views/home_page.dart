@@ -4,12 +4,12 @@ import 'package:cbt_app/views/quiz_page.dart';
 import 'package:cbt_app/controllers/exam_controller.dart';
 import 'package:cbt_app/services/offline_exam_storage.dart';
 import 'package:cbt_app/services/offline_sync_service.dart';
-import 'package:cbt_app/widgets/start_dialog.dart';
-import 'package:cbt_app/widgets/download_dialog.dart';
-import 'package:cbt_app/widgets/home_header.dart';
-import 'package:cbt_app/widgets/exam_list_section.dart';
-import 'package:cbt_app/widgets/loading_state.dart';
-import 'package:cbt_app/widgets/error_state.dart';
+import 'package:cbt_app/widgets/dialogs/start_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/download_dialog.dart';
+import 'package:cbt_app/widgets/home/home_header.dart';
+import 'package:cbt_app/widgets/home/exam_list_section.dart';
+import 'package:cbt_app/widgets/common/loading_state.dart';
+import 'package:cbt_app/widgets/common/error_state.dart';
 import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
 import 'package:cbt_app/utils/helpers.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +24,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final UjianController _controller = UjianController();
+  final ExamController _controller = ExamController();
   final OfflineSyncService _syncService = OfflineSyncService();
   late Future<ExamResponseModel> _futureExams;
   bool _hasPendingSync = false;
@@ -278,7 +278,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return StartDialog(
-          okText: "Mulai Ujian",
+          okText: 'Mulai Ujian',
           subject: examName,
           examDate: startDate,
           btnPressed: () =>
@@ -313,7 +313,7 @@ class _HomePageState extends State<HomePage> {
       if (blockStatus || examParticipant.isBlocked) {
         if (examParticipant.isBlocked && !blockStatus) {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool("blockKey $examId", true);
+          await prefs.setBool('blockKey $examId', true);
         }
         if (!mounted) return;
         Navigator.pop(context); // Close loading
@@ -358,7 +358,7 @@ class _HomePageState extends State<HomePage> {
         // Sync local block status if server says blocked
         if (examParticipant.isBlocked && !blockStatus) {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool("blockKey ${examParticipant.exam.examId}", true);
+          await prefs.setBool('blockKey ${examParticipant.exam.examId}', true);
         }
         if (!mounted) return;
         Navigator.push(

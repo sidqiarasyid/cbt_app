@@ -54,9 +54,9 @@ Native mobile application for students to take Computer-Based Tests (CBT). Stude
 | Language | Dart | 3.9.2+ |
 | HTTP Client | http | 1.6.0+ |
 | Local Storage | shared_preferences | 2.5.4+ |
-| Date Formatting | intl | 0.20.2+ |
-| Image Picker | image_picker | 1.2.1+ |
-| State Management | - (Manual StatefulWidget) | — |
+| Secure Storage | flutter_secure_storage | 9.2.4+ |
+| State Management | provider (`ChangeNotifier`) | 6.1.2+ |
+| Testing | flutter_test + mocktail | 1.0.4+ |
 
 ---
 
@@ -93,35 +93,24 @@ flutter pub get
 
 ### 3. Configure API URL
 
-Edit `lib/utils/url.dart`:
-
-```dart
-class Url {
-  static const bool useNgrok    = false;           // true  → internet APK (Firebase App Distribution)
-  static const bool useEmulator = true;            // true  → emulator | false → physical device
-  static const String _localIP  = "192.168.18.x"; // your computer's IP (ipconfig → IPv4)
-  static const String _ngrokHost = "cbt-be.ngrok-free.app"; // replace with your ngrok static domain
-  static const String _port = "3000";
-}
-```
-
-**Configuration Guide:**
+The backend base URL is read from a compile-time `--dart-define` flag (`API_BASE_URL`). The default value lives in [`lib/config/env.dart`](lib/config/env.dart) and is used when no flag is passed.
 
 **Android Emulator (local dev):**
-- `useNgrok = false`, `useEmulator = true`
-- Uses `10.0.2.2` — Android emulator gateway that maps to host machine `localhost`
-- Backend must be running at `localhost:3000`
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
+```
+`10.0.2.2` is the emulator gateway that maps to the host machine's `localhost`. Backend must be running on `localhost:3000`.
 
 **Physical Device on same WiFi:**
-- `useNgrok = false`, `useEmulator = false`
-- Set `_localIP` to your computer's IPv4 (`ipconfig`)
-- Device and computer must be on the same network
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.x.x:3000/api
+```
+Replace `192.168.x.x` with your computer's IPv4 (`ipconfig`). Device and computer must be on the same network.
 
-**APK distributed via Firebase App Distribution (internet):**
-- `useNgrok = true` — app calls `https://<_ngrokHost>/api` (no port, HTTPS via ngrok)
-- Replace `_ngrokHost` with your reserved static domain
-- `flutter build apk --release`, upload to Firebase App Distribution
-- Full guide: [NGROK-FIREBASE-SETUP.md](../NGROK-FIREBASE-SETUP.md)
+**APK distributed over the internet (e.g. via ngrok / Firebase App Distribution):**
+```bash
+flutter build apk --release --dart-define=API_BASE_URL=https://<your-domain>/api
+```
 
 ### 4. Set Up Android Emulator (Optional)
 
@@ -182,11 +171,16 @@ flutter pub upgrade          # Update dependencies to latest
 flutter run                  # Debug mode on connected device/emulator
 flutter run --release        # Release mode
 flutter build apk            # Build release APK
+flutter analyze              # Static analysis (lint + type)
+flutter test                 # Run unit tests under test/
+dart fix --apply             # Auto-apply lint fixes
 flutter clean                # Clean build artifacts
 flutter doctor               # Check environment setup
 flutter devices              # List connected devices
 flutter logs                 # View app logs in terminal
 ```
+
+Pass the backend URL via `--dart-define=API_BASE_URL=...` on any `flutter run` / `flutter build` command.
 
 ---
 
@@ -355,74 +349,76 @@ class ExamService {
 
 ### Code Style
 
-- **Architecture** — MVC pattern: Models, Views, Controllers, Services
+- **Architecture** — MVC + Provider: Models, Views, Controllers, Services, Providers (`ChangeNotifier`)
 - **Models** — Data classes with `fromJson()` factory constructors for API response parsing
-- **Controllers** — Business logic, state management, API call orchestration
-- **Services** — HTTP calls to backend API endpoints
-- **Views** — UI widgets (StatefulWidget for interactive pages)
-- **Widgets** — Reusable UI components (cards, dialogs, headers)
-- **State Management** — `setState()` within StatefulWidget (no external state management library)
+- **Controllers** — Orchestrate complex flows that span multiple services (e.g. `ExamController`)
+- **Services** — HTTP calls to backend API endpoints; injected into providers/controllers
+- **Providers** — App-wide state: `AuthProvider`, `ConnectivityProvider` (see `lib/providers/`)
+- **Views** — UI widgets that read providers via `context.watch` / `context.read`
+- **Widgets** — Reusable UI components grouped by purpose (`cards/`, `common/`, `dialogs/`, `home/`, `quiz/`)
 - **Navigation** — `Navigator.push()` / `Navigator.pushReplacement()`
 - **Error Handling** — Try/catch around API calls, `ScaffoldMessenger` for user-facing errors
-- **Session** — JWT token stored via `SharedPreferences`, managed by `SessionManager`
+- **Session** — JWT token stored via `flutter_secure_storage` and exposed through `SessionManager`
+- **Config** — Backend URL via `--dart-define=API_BASE_URL=...` (see `lib/config/env.dart`)
+- **Linter** — `flutter_lints` + `prefer_single_quotes`, `require_trailing_commas`
 
 ### Project Structure
 
 ```
 lib/
-├── main.dart                     # Entry point + BottomNavigationBar
+├── main.dart                         # Bootstraps runApp; hosts MyHomePage (bottom nav)
+├── app.dart                          # Root: MultiProvider + MaterialApp + SplashPage
+├── config/
+│   └── env.dart                      # Backend URL from --dart-define (API_BASE_URL)
 ├── controllers/
-│   ├── auth_controller.dart      # Login/logout logic
-│   ├── exam_controller.dart      # Exam operations (start, submit, finish)
-│   ├── home_controller.dart      # Home page logic
-│   └── profile_controller.dart   # Profile operations
+│   └── exam_controller.dart          # Orchestrates exam flows across services
 ├── models/
-│   ├── user_model.dart           # User model from API
-│   ├── exam_model.dart           # Exam model (questions, timer, etc.)
-│   ├── exam_response_model.dart  # Response: GET /students/exams
-│   ├── exam_result_response_model.dart  # Response: GET /exam-results/my-results
-│   ├── start_exam_response_model.dart   # Response: POST /students/exams/start
-│   └── quiz_model.dart           # Per-question model (answer, status)
+│   ├── user_model.dart               # User from API
+│   ├── exam_model.dart               # Exam (questions, timer, etc.)
+│   ├── exam_response_model.dart      # Response: GET /students/exams
+│   ├── exam_result_response_model.dart   # Response: GET /exam-results/my-results
+│   ├── start_exam_response_model.dart    # Response: POST /students/exams/start
+│   ├── school_profile_model.dart     # School profile
+│   └── quiz_model.dart               # Per-question model
+├── providers/
+│   ├── auth_provider.dart            # Auth status, login/logout, bootstrap
+│   └── connectivity_provider.dart    # Periodic online/offline polling
 ├── services/
-│   ├── login_service.dart        # API: POST /auth/login
-│   ├── exam_service.dart         # API: students/exams/*, exam-results/*
-│   └── profile_service.dart      # API: GET /auth/me, PATCH /auth/profile
+│   ├── auth_service.dart             # API: POST /auth/login, /auth/logout
+│   ├── exam_service.dart             # API: students/exams/*, exam-results/*
+│   ├── profile_service.dart          # API: /auth/me, /auth/profile, /auth/change-password
+│   ├── school_profile_service.dart   # API: /school-profile
+│   ├── time_service.dart             # Trusted server time for offline window checks
+│   ├── offline_exam_storage.dart     # Local cache of exam data + pending answers
+│   └── offline_sync_service.dart     # Re-sync queued answers / finishes
 ├── utils/
-│   ├── url.dart                  # API base URL configuration
-│   ├── session_manager.dart      # Token + profile image storage
-│   └── helpers.dart              # Date formatter, exam type helper
+│   ├── session_manager.dart          # Secure JWT token storage wrapper
+│   ├── page_transitions.dart         # Fade/slide route builders
+│   └── helpers.dart                  # Date formatter, exam type helper
 ├── views/
-│   ├── login_page.dart           # Login page
-│   ├── home_page.dart            # Tab 1: exam list
-│   ├── history_page.dart         # Tab 2: exam history + scores
-│   ├── profile_page.dart         # Tab 3: profile + logout
-│   ├── quiz_page.dart            # Exam taking page (timer, questions, navigation)
-│   ├── quiz_essay_page.dart      # Essay question widget
-│   ├── quiz_multiple_choice_page.dart  # MC question widget
-│   ├── quiz_picker.dart          # Question navigation grid
-│   ├── quiz_blocked_page.dart    # Blocked student page
-│   └── quiz_end_page.dart        # Post-exam page
+│   ├── splash_page.dart              # Decides login vs. home based on auth bootstrap
+│   ├── login_page.dart
+│   ├── home_page.dart                # Tab 1: exam list
+│   ├── history_page.dart             # Tab 2: history + scores
+│   ├── profile_page.dart             # Tab 3: profile + logout
+│   ├── quiz_page.dart                # Exam taking (timer, questions, navigation)
+│   ├── quiz_essay_page.dart
+│   ├── quiz_multiple_choice_page.dart
+│   ├── quiz_picker.dart
+│   ├── quiz_blocked_page.dart
+│   └── quiz_end_page.dart
 ├── widgets/
-│   ├── exam_card.dart            # Exam card on home
-│   ├── exam_list_section.dart    # Exam list section
-│   ├── history_card.dart         # History card
-│   ├── home_header.dart          # Home page header
-│   ├── navbar.dart               # Bottom navigation bar
-│   ├── picker_item.dart          # Question picker item
-│   ├── start_dialog.dart         # Start exam confirmation
-│   ├── finish_quiz_dialog.dart   # Finish exam confirmation
-│   ├── end_quiz_dialog.dart      # Exit exam dialog
-│   ├── unanswered_warning_dialog.dart       # Unanswered warning (exit)
-│   ├── unanswered_finish_warning_dialog.dart # Unanswered warning (finish)
-│   ├── loading_state.dart        # Loading widget
-│   ├── error_state.dart          # Error widget
-│   └── dialogs/
-│       ├── loading_dialog.dart           # Reusable utility dialogs (loading, error, success, confirm)
-│       ├── exit_all_answered_dialog.dart # Exit quiz dialog when all questions answered
-│       ├── logout_dialog.dart            # Logout confirmation dialog
-│       └── change_password_dialog.dart   # Change password form dialog
+│   ├── cards/                        # exam_card, history_card
+│   ├── common/                       # error_state, loading_state, picker_item
+│   ├── dialogs/                      # All *_dialog.dart
+│   ├── home/                         # home_header, exam_list_section, navbar
+│   └── quiz/                         # (reserved for split-out quiz subwidgets)
 └── style/
-    └── style.dart                # App colors and theme
+    └── style.dart                    # Colors + theme
+
+test/
+├── config/env_test.dart
+└── providers/auth_provider_test.dart # mocktail-based unit tests
 ```
 
 ## Exam Taking Flow

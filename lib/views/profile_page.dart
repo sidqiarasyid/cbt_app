@@ -1,8 +1,9 @@
-import 'package:cbt_app/controllers/auth_controller.dart';
+import 'package:cbt_app/providers/auth_provider.dart';
 import 'package:cbt_app/views/login_page.dart';
 import 'package:cbt_app/widgets/dialogs/logout_dialog.dart';
 import 'package:cbt_app/widgets/dialogs/change_password_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../style/style.dart';
 import '../services/profile_service.dart';
@@ -64,20 +65,19 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  final AuthController _authController = AuthController();
-
   Future<void> logout() async {
     if (!mounted) return;
+    final auth = context.read<AuthProvider>();
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return LogoutDialog(
           onConfirmLogout: () async {
-            await _authController.logout();
+            await auth.logout();
             if (!context.mounted) return;
             Navigator.pushAndRemoveUntil(
               context,
-              fadeSlideRoute(const Loginpage()),
+              fadeSlideRoute(const LoginPage()),
               (route) => false,
             );
           },

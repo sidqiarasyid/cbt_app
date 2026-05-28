@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cbt_app/utils/url.dart';
+import 'package:cbt_app/config/env.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,7 +25,7 @@ class TimeService {
   /// Throws on network failure — callers should handle and decide whether to
   /// fall back to the cached offset.
   static Future<DateTime> fetchServerTime() async {
-    final uri = Uri.parse('${Url.baseUrl}/time');
+    final uri = Uri.parse('${Env.apiBaseUrl}/time');
     final localBefore = DateTime.now();
     final response = await http
         .get(uri, headers: {'Content-Type': 'application/json'})

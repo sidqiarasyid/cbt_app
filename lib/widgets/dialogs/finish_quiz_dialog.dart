@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class EndQuizDialog extends StatelessWidget {
+class FinishQuizDialog extends StatelessWidget {
   final VoidCallback onYesPressed;
   final VoidCallback onNoPressed;
-  const EndQuizDialog({super.key, required this.onYesPressed, required this.onNoPressed});
+  const FinishQuizDialog({super.key, required this.onYesPressed, required this.onNoPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -32,15 +32,15 @@ class EndQuizDialog extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                  colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
                 ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.exit_to_app_rounded, size: 40, color: Colors.white),
+              child: const Icon(Icons.check_circle_rounded, size: 40, color: Colors.white),
             ),
             const SizedBox(height: 20),
             const Text(
-              "Keluar Ujian",
+              'Selesaikan Ujian',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -52,11 +52,11 @@ class EndQuizDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF9800).withValues(alpha: 0.08),
+                color: const Color(0xFF4CAF50).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
-                "Ujian tidak akan diselesaikan.\nApakah anda yakin ingin keluar?",
+                'Semua soal telah dijawab.\nApakah anda yakin ingin menyelesaikan ujian ini?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -79,7 +79,7 @@ class EndQuizDialog extends StatelessWidget {
                     ),
                     onPressed: onNoPressed,
                     child: const Text(
-                      "Batal",
+                      'Batal',
                       style: TextStyle(
                         color: Colors.black54,
                         fontSize: 15,
@@ -94,12 +94,12 @@ class EndQuizDialog extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                        colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                          color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -116,7 +116,7 @@ class EndQuizDialog extends StatelessWidget {
                       ),
                       onPressed: onYesPressed,
                       child: const Text(
-                        "Ya, Keluar",
+                        'Ya, Selesai',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 15,

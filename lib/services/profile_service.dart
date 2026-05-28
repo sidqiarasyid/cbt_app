@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:cbt_app/utils/url.dart';
+import 'package:cbt_app/config/env.dart';
 import 'package:http/http.dart' as http;
 import 'package:cbt_app/utils/session_manager.dart';
 import 'package:cbt_app/models/user_model.dart';
@@ -22,7 +22,7 @@ class ProfileService {
     }
   }
   Future<UserModel> fetchProfile() async {
-    final Uri meUrl = Uri.parse('${Url.emuUrl}/auth/me');
+    final Uri meUrl = Uri.parse('${Env.apiBaseUrl}/auth/me');
     final String? token = await SessionManager.getToken();
     if (token == null) throw Exception('Not authenticated');
 
@@ -55,7 +55,7 @@ class ProfileService {
     String? major,
     String? gradeLevel,
   }) async {
-    final Uri updateUrl = Uri.parse('${Url.emuUrl}/auth/profile');
+    final Uri updateUrl = Uri.parse('${Env.apiBaseUrl}/auth/profile');
     final String? token = await SessionManager.getToken();
     if (token == null) throw Exception('Not authenticated');
 
@@ -93,7 +93,7 @@ class ProfileService {
     required String currentPassword,
     required String newPassword,
   }) async {
-    final Uri changePasswordUrl = Uri.parse('${Url.emuUrl}/auth/change-password');
+    final Uri changePasswordUrl = Uri.parse('${Env.apiBaseUrl}/auth/change-password');
     final String? token = await SessionManager.getToken();
     if (token == null) throw Exception('Not authenticated');
 

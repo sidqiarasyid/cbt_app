@@ -1,17 +1,35 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:cbt_app/utils/url.dart';
+import 'package:cbt_app/config/env.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:cbt_app/models/user_model.dart';
+import 'package:cbt_app/utils/session_manager.dart';
 
-class LoginService {
-  Future<UserModel> loginSiswa(String username, String password) async {
-    final url = Uri.parse('${Url.emuUrl}/auth/login');
+class AuthService {
+  /// Notify the server about logout so it can record an activity log.
+  /// Silent on failure — caller still proceeds with local cleanup.
+  Future<void> serverLogout() async {
+    final token = await SessionManager.getToken();
+    if (token == null || token.isEmpty) return;
+    await http
+        .post(
+          Uri.parse('${Env.apiBaseUrl}/auth/logout'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 5));
+  }
+
+
+  Future<UserModel> loginStudent(String username, String password) async {
+    final url = Uri.parse('${Env.apiBaseUrl}/auth/login');
     final Map<String, dynamic> body = {
-      "username": username,
-      "password": password,
+      'username': username,
+      'password': password,
     };
 
     final String bodyJson = jsonEncode(body);

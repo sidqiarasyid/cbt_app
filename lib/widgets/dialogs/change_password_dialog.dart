@@ -95,7 +95,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  "Ubah Password",
+                  'Ubah Password',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -151,7 +151,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                         ),
                         onPressed: _isLoading ? null : () => Navigator.pop(context),
                         child: const Text(
-                          "Batal",
+                          'Batal',
                           style: TextStyle(
                             color: Colors.black54,
                             fontSize: 15,
@@ -190,7 +190,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                                   ),
                                 )
                               : const Text(
-                                  "Simpan",
+                                  'Simpan',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 15,

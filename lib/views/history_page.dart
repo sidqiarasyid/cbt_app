@@ -1,9 +1,9 @@
 import 'package:cbt_app/models/exam_result_response_model.dart';
 import 'package:cbt_app/services/exam_service.dart';
 import 'package:cbt_app/style/style.dart';
-import 'package:cbt_app/widgets/history_card.dart';
-import 'package:cbt_app/widgets/loading_state.dart';
-import 'package:cbt_app/widgets/error_state.dart';
+import 'package:cbt_app/widgets/cards/history_card.dart';
+import 'package:cbt_app/widgets/common/loading_state.dart';
+import 'package:cbt_app/widgets/common/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 

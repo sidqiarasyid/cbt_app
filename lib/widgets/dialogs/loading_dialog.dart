@@ -104,7 +104,7 @@ void showErrorDialog(BuildContext context, String error) {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Gagal",
+              'Gagal',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -157,7 +157,7 @@ void showErrorDialog(BuildContext context, String error) {
                   ),
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
-                    "OK",
+                    'OK',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,
@@ -210,7 +210,7 @@ void showSuccessDialog(BuildContext context, String message) {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Berhasil",
+              'Berhasil',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -263,7 +263,7 @@ void showSuccessDialog(BuildContext context, String message) {
                   ),
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
-                    "OK",
+                    'OK',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,

@@ -130,7 +130,7 @@ class StartDialog extends StatelessWidget {
                     ),
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      "Batal",
+                      'Batal',
                       style: TextStyle(
                         color: Colors.black54,
                         fontSize: 15,

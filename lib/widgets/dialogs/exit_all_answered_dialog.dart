@@ -51,7 +51,7 @@ class ExitAllAnsweredDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Keluar Ujian?",
+              'Keluar Ujian?',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -69,7 +69,7 @@ class ExitAllAnsweredDialog extends StatelessWidget {
                 border: Border.all(color: const Color(0xFF4CAF50).withValues(alpha: 0.3)),
               ),
               child: Text(
-                "✓ Semua soal telah dijawab",
+                '✓ Semua soal telah dijawab',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -79,7 +79,7 @@ class ExitAllAnsweredDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              "Apakah anda ingin:",
+              'Apakah anda ingin:',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -90,7 +90,7 @@ class ExitAllAnsweredDialog extends StatelessWidget {
             const SizedBox(height: 20),
             // Finish Button
             _buildGradientButton(
-              label: "Selesaikan Ujian",
+              label: 'Selesaikan Ujian',
               gradientColors: const [Color(0xFF4CAF50), Color(0xFF2E7D32)],
               onPressed: () {
                 Navigator.pop(context);
@@ -100,7 +100,7 @@ class ExitAllAnsweredDialog extends StatelessWidget {
             const SizedBox(height: 10),
             // Exit without finish button
             _buildGradientButton(
-              label: "Keluar Tanpa Menyelesaikan",
+              label: 'Keluar Tanpa Menyelesaikan',
               gradientColors: const [Color(0xFFF44336), Color(0xFFC62828)],
               onPressed: () {
                 Navigator.pop(context);
@@ -121,7 +121,7 @@ class ExitAllAnsweredDialog extends StatelessWidget {
                 ),
                 onPressed: () => Navigator.pop(context),
                 child: const Text(
-                  "Batal",
+                  'Batal',
                   style: TextStyle(
                     color: Colors.black54,
                     fontSize: 15,

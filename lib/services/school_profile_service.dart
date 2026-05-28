@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:cbt_app/models/school_profile_model.dart';
-import 'package:cbt_app/utils/url.dart';
+import 'package:cbt_app/config/env.dart';
 import 'package:http/http.dart' as http;
 
 /// Service to fetch the school profile from the backend.
@@ -24,7 +24,7 @@ class SchoolProfileService {
     }
 
     try {
-      final uri = Uri.parse('${Url.baseUrl}/school-profile');
+      final uri = Uri.parse('${Env.apiBaseUrl}/school-profile');
       final response = await http
           .get(uri, headers: {'Content-Type': 'application/json'})
           .timeout(const Duration(seconds: 10));

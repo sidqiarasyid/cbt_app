@@ -5,7 +5,7 @@ import 'package:cbt_app/models/start_exam_response_model.dart';
 import 'package:cbt_app/models/exam_response_model.dart';
 import 'package:cbt_app/models/exam_result_response_model.dart';
 import 'package:cbt_app/utils/session_manager.dart';
-import 'package:cbt_app/utils/url.dart';
+import 'package:cbt_app/config/env.dart';
 import 'package:http/http.dart' as http;
 
 class ExamService {
@@ -16,7 +16,7 @@ class ExamService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-      final url = Uri.parse('${Url.emuUrl}/students/exams');
+      final url = Uri.parse('${Env.apiBaseUrl}/students/exams');
 
     try {
       final response = await http
@@ -58,7 +58,7 @@ class ExamService {
         throw Exception('Token tidak ditemukan. Silakan login kembali.');
       }
 
-      final url = Uri.parse('${Url.emuUrl}/exam-results/my-results');
+      final url = Uri.parse('${Env.apiBaseUrl}/exam-results/my-results');
 
       try {
         final response = await http
@@ -99,7 +99,7 @@ class ExamService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/students/exams/start');
+    final url = Uri.parse('${Env.apiBaseUrl}/students/exams/start');
 
     try {
       final response = await http
@@ -149,7 +149,7 @@ class ExamService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/students/exams/answer');
+    final url = Uri.parse('${Env.apiBaseUrl}/students/exams/answer');
 
     try {
       final Map<String, dynamic> body = {
@@ -210,7 +210,7 @@ class ExamService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-    final url = Uri.parse('${Url.emuUrl}/students/exams/finish');
+    final url = Uri.parse('${Env.apiBaseUrl}/students/exams/finish');
 
     try {
       final response = await http
@@ -255,7 +255,7 @@ class ExamService {
 
     if (token == null) return; // Silent fail - local block already set
 
-    final url = Uri.parse('${Url.emuUrl}/students/exams/report-violation');
+    final url = Uri.parse('${Env.apiBaseUrl}/students/exams/report-violation');
 
     try {
       await http

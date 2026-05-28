@@ -1,16 +1,9 @@
 import 'package:flutter/material.dart';
 
-class UnansweredFinishWarningDialog extends StatelessWidget {
-  final int unansweredCount;
-  final VoidCallback onContinueFinish;
-  final VoidCallback onBack;
-  
-  const UnansweredFinishWarningDialog({
-    super.key, 
-    required this.unansweredCount,
-    required this.onContinueFinish, 
-    required this.onBack
-  });
+class EndQuizDialog extends StatelessWidget {
+  final VoidCallback onYesPressed;
+  final VoidCallback onNoPressed;
+  const EndQuizDialog({super.key, required this.onYesPressed, required this.onNoPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +36,11 @@ class UnansweredFinishWarningDialog extends StatelessWidget {
                 ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.warning_amber_rounded, size: 40, color: Colors.white),
+              child: const Icon(Icons.exit_to_app_rounded, size: 40, color: Colors.white),
             ),
             const SizedBox(height: 20),
             const Text(
-              "Perhatian!",
+              'Keluar Ujian',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -56,42 +49,23 @@ class UnansweredFinishWarningDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Unanswered count badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF9800).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                "$unansweredCount soal belum dijawab",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFF57C00),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF9800).withValues(alpha: 0.06),
+                color: const Color(0xFFFF9800).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFF9800).withValues(alpha: 0.15)),
               ),
-              child: Text(
-                "Soal yang belum dijawab akan dinilai 0.\n\nApakah anda yakin ingin menyelesaikan ujian sekarang?",
+              child: const Text(
+                'Ujian tidak akan diselesaikan.\nApakah anda yakin ingin keluar?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.orange[800],
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Colors.black87,
                   height: 1.4,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
@@ -103,12 +77,12 @@ class UnansweredFinishWarningDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: onBack,
+                    onPressed: onNoPressed,
                     child: const Text(
-                      "Kembali",
+                      'Batal',
                       style: TextStyle(
                         color: Colors.black54,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -120,12 +94,12 @@ class UnansweredFinishWarningDialog extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                        colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+                          color: const Color(0xFFFF9800).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -140,12 +114,12 @@ class UnansweredFinishWarningDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: onContinueFinish,
+                      onPressed: onYesPressed,
                       child: const Text(
-                        "Ya, Selesaikan",
+                        'Ya, Keluar',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

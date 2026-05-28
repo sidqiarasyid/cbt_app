@@ -11,7 +11,7 @@ import 'package:cbt_app/services/offline_sync_service.dart';
 import 'package:cbt_app/services/time_service.dart';
 import 'package:cbt_app/utils/helpers.dart';
 
-class UjianController {
+class ExamController {
   final ExamService _examService = ExamService();
   final OfflineSyncService _syncService = OfflineSyncService();
 
@@ -204,13 +204,13 @@ class UjianController {
       await OfflineExamStorage.removePendingAnswer(examParticipantId, questionId);
       return true; // Online submit succeeded
     } on SocketException {
-      debugPrint('[UjianController] Offline - jawaban disimpan lokal');
+      debugPrint('[ExamController] Offline - jawaban disimpan lokal');
       return false; // Saved offline
     } catch (e) {
       if (e.toString().contains('Tidak dapat terhubung') || 
           e.toString().contains('timeout') ||
           e.toString().contains('SocketException')) {
-        debugPrint('[UjianController] Offline - jawaban disimpan lokal');
+        debugPrint('[ExamController] Offline - jawaban disimpan lokal');
         return false; // Saved offline
       }
       // Re-throw for non-network errors (but answer is still saved locally)
@@ -263,12 +263,12 @@ class UjianController {
   /// Cek apakah ujian di-block (sudah pernah dikerjakan)
   Future<bool> checkBlockStatus(int examId) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool("blockKey $examId") ?? false;
+    return prefs.getBool('blockKey $examId') ?? false;
   }
 
   /// Set block status untuk ujian
   Future<void> setBlockStatus(int examId, bool blocked) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("blockKey $examId", blocked);
+    await prefs.setBool('blockKey $examId', blocked);
   }
 }

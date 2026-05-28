@@ -13,10 +13,10 @@ import 'package:cbt_app/services/offline_exam_storage.dart';
 import 'package:cbt_app/services/offline_sync_service.dart';
 import 'package:cbt_app/widgets/dialogs/exit_all_answered_dialog.dart';
 import 'package:cbt_app/widgets/dialogs/loading_dialog.dart';
-import 'package:cbt_app/widgets/end_quiz_dialog.dart';
-import 'package:cbt_app/widgets/finish_quiz_dialog.dart';
-import 'package:cbt_app/widgets/unanswered_warning_dialog.dart';
-import 'package:cbt_app/widgets/unanswered_finish_warning_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/end_quiz_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/finish_quiz_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/unanswered_warning_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/unanswered_finish_warning_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -136,7 +136,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
 
     // 1. Persist block locally (works offline)
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("blockKey ${widget.exam.examId}", true);
+    await prefs.setBool('blockKey ${widget.exam.examId}', true);
 
     // 2. Report violation to backend (fire-and-forget)
     _examService.reportViolation(
@@ -363,7 +363,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     
     ques = qList[currentQuestion].question;
     
-    if (qList[currentQuestion].quizType == "ESSAY") {
+    if (qList[currentQuestion].quizType == 'ESSAY') {
       essayController.text = qList[currentQuestion].answerEssay ?? '';
     } else {
       // Convert answerOptions to String list for QuizPilganPage
@@ -382,7 +382,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     final quiz = qList[currentQuestion];
     
     try {
-      if (quiz.quizType == "ESSAY") {
+      if (quiz.quizType == 'ESSAY') {
         final text = essayController.text.trim().isEmpty ? null : essayController.text.trim();
         
         // Always save locally first
@@ -411,7 +411,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
         } catch (e) {
           _handleSubmitError(e);
         }
-      } else if (quiz.quizType == "SINGLE_CHOICE") {
+      } else if (quiz.quizType == 'SINGLE_CHOICE') {
         int? optionId;
         if (quiz.selectedAnswerIndex != null && quiz.answerOptions != null) {
           optionId = quiz.answerOptions![quiz.selectedAnswerIndex!].optionId;
@@ -442,7 +442,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
         } catch (e) {
           _handleSubmitError(e);
         }
-      } else if (quiz.quizType == "MULTIPLE_CHOICE") {
+      } else if (quiz.quizType == 'MULTIPLE_CHOICE') {
         List<int>? optionIds;
         if (quiz.selectedAnswerIndices != null && 
             quiz.selectedAnswerIndices!.isNotEmpty && 
@@ -526,9 +526,9 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     
     
     setState(() {
-      if (quiz.quizType == "SINGLE_CHOICE") {
+      if (quiz.quizType == 'SINGLE_CHOICE') {
         quiz.selectedAnswerIndex = selectedIndex;
-      } else if (quiz.quizType == "MULTIPLE_CHOICE") {
+      } else if (quiz.quizType == 'MULTIPLE_CHOICE') {
         quiz.selectedAnswerIndices = selectedIndices;
       }
     });
@@ -540,7 +540,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   void nextQuestion() {
     List<QuizModel> qList = widget.exam.quizList;
     // Flush pending essay debounce before navigating
-    if (qList[currentQuestion].quizType == "ESSAY") {
+    if (qList[currentQuestion].quizType == 'ESSAY') {
       _submitAnswer();
     }
     qList[currentQuestion].isFinished = true;
@@ -558,7 +558,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
     if (currentQuestion > 0) {
       // Flush pending essay debounce before navigating
       List<QuizModel> qList = widget.exam.quizList;
-      if (qList[currentQuestion].quizType == "ESSAY") {
+      if (qList[currentQuestion].quizType == 'ESSAY') {
         _submitAnswer();
       }
       currentQuestion--;
@@ -571,7 +571,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
   void _showExitConfirmation() {
     // F3: Flush pending essay debounce before showing exit dialog
     List<QuizModel> qList = widget.exam.quizList;
-    if (qList[currentQuestion].quizType == "ESSAY") {
+    if (qList[currentQuestion].quizType == 'ESSAY') {
       _submitAnswer();
     }
     int answeredCount = qList.where((q) => q.hasAnswer).length;
@@ -610,7 +610,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
           unansweredCount: unansweredCount,
           onContinue: () async{
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setBool("blockKey ${widget.exam.examId}", true);
+            await prefs.setBool('blockKey ${widget.exam.examId}', true);
             
             // Report to backend
             _examService.reportViolation(
@@ -1227,7 +1227,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
           ),
           const SizedBox(height: 12),
           // Question body
-          quiz.quizType == "ESSAY"
+          quiz.quizType == 'ESSAY'
               ? QuizEssayPage(
                   key: ValueKey('essay_${quiz.questionId}_$currentQuestion'),
                   question: ques,
@@ -1242,7 +1242,7 @@ class _QuizPageState extends State<QuizPage> with WidgetsBindingObserver{
                   questionImage: quiz.image,
                   initialSelectedIndex: quiz.selectedAnswerIndex,
                   initialSelectedIndices: quiz.selectedAnswerIndices,
-                  isMultipleChoice: quiz.quizType == "MULTIPLE_CHOICE",
+                  isMultipleChoice: quiz.quizType == 'MULTIPLE_CHOICE',
                   onAnswerSelected: (selectedIndex, {selectedIndices}) {
                     _onAnswerSelected(selectedIndex, selectedIndices: selectedIndices);
                   },

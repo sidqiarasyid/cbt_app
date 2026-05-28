@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:cbt_app/models/quiz_model.dart';
 import 'package:cbt_app/models/exam_model.dart';
-import 'package:cbt_app/widgets/picker_item.dart';
-import 'package:cbt_app/widgets/finish_quiz_dialog.dart';
-import 'package:cbt_app/widgets/unanswered_warning_dialog.dart';
-import 'package:cbt_app/widgets/end_quiz_dialog.dart';
+import 'package:cbt_app/widgets/common/picker_item.dart';
+import 'package:cbt_app/widgets/dialogs/finish_quiz_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/unanswered_warning_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/end_quiz_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
