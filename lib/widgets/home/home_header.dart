@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cbt_app/services/school_profile_service.dart';
 import 'package:cbt_app/models/school_profile_model.dart';
+import 'package:cbt_app/config/env.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -12,6 +13,7 @@ class HomeHeader extends StatelessWidget {
       future: SchoolProfileService.fetchProfile(),
       builder: (context, schoolSnap) {
         final schoolName = schoolSnap.data?.schoolName ?? 'CBT App';
+        final logoUrl = Env.resolveAssetUrl(schoolSnap.data?.logoUrl);
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -33,12 +35,27 @@ class HomeHeader extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 52,
+                  height: 52,
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.school_rounded, color: Colors.white, size: 28),
+                  child: logoUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            logoUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.school_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.school_rounded, color: Colors.white, size: 28),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

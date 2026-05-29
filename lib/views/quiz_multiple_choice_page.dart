@@ -1,5 +1,6 @@
 
 import 'package:cbt_app/style/style.dart';
+import 'package:cbt_app/config/env.dart';
 
 import 'package:flutter/material.dart';
 
@@ -145,7 +146,7 @@ class _QuizPilganPageState extends State<QuizPilganPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
-                    widget.questionImage!,
+                    Env.resolveAssetUrl(widget.questionImage)!,
                     fit: BoxFit.contain,
                     width: double.infinity,
                     loadingBuilder: (context, child, loadingProgress) {

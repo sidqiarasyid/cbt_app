@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cbt_app/style/style.dart';
+import 'package:cbt_app/config/env.dart';
 
 /// Konten untuk soal esai (dengan/atau tanpa gambar).
 /// - Parent mengirim: [formKey] dan [controller] agar bisa validasi dari luar.
@@ -79,7 +80,7 @@ class _QuizEssayPageState extends State<QuizEssayPage> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Image.network(
-                  widget.questionImage!,
+                  Env.resolveAssetUrl(widget.questionImage)!,
                   fit: BoxFit.contain,
                   width: double.infinity,
                   loadingBuilder: (context, child, loadingProgress) {
