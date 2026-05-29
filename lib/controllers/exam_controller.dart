@@ -122,18 +122,37 @@ class ExamController {
 
   /// Memulai ujian dan return ExamModel yang siap digunakan.
   /// Juga menyimpan cache data ujian untuk dukungan offline.
+  Future<ExamModel> startExamWithCode(
+    ExamParticipant examParticipant,
+    String examName,
+    DateTime startDate, {
+    required String unlockCode,
+  }) async {
+    final response = await _examService.startExam(
+      examParticipant.exam.examId,
+      unlockCode: unlockCode,
+    );
+    return _assembleExamModel(examParticipant, examName, startDate, response);
+  }
+
   Future<ExamModel> startExam(
     ExamParticipant examParticipant,
     String examName,
     DateTime startDate,
   ) async {
-    final startExamResponse = await _examService.startExam(
-      examParticipant.exam.examId,
-    );
+    final response = await _examService.startExam(examParticipant.exam.examId);
+    return _assembleExamModel(examParticipant, examName, startDate, response);
+  }
 
-    List<QuizModel> quizList = startExamResponse.questionList.map((examQuestion) {
-      return QuizModel.fromSoalUjian(examQuestion);
-    }).toList();
+  Future<ExamModel> _assembleExamModel(
+    ExamParticipant examParticipant,
+    String examName,
+    DateTime startDate,
+    dynamic startExamResponse,
+  ) async {
+    final quizList = startExamResponse.questionList
+        .map<QuizModel>((q) => QuizModel.fromSoalUjian(q))
+        .toList();
 
     final examModel = ExamModel(
       examId: examParticipant.exam.examId,
@@ -151,11 +170,8 @@ class ExamController {
       remainingSeconds: startExamResponse.remainingSeconds,
     );
 
-    // Cache exam data for offline support
     await OfflineExamStorage.cacheExamData(examModel);
-    // Mark this exam participant as pending finish (for offline sync)
     await OfflineExamStorage.markPendingFinish(examModel.examParticipantId);
-
     return examModel;
   }
 

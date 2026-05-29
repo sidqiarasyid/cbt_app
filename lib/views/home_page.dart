@@ -34,9 +34,29 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _futureExams = _controller.getExamList();
+    _futureExams = _fetchAndSyncExams();
     _checkAndSyncOfflineData();
     _loadDownloadedExamIds();
+  }
+
+  /// Fetches the student's exam list and reconciles the local block flag with
+  /// the server's `is_blocked`. When an admin unblocks a participant on the
+  /// web dashboard, the server flips `is_blocked` to false; we clear the
+  /// corresponding local `blockKey {examId}` so the student can re-enter.
+  Future<ExamResponseModel> _fetchAndSyncExams() async {
+    final response = await _controller.getExamList();
+    final prefs = await SharedPreferences.getInstance();
+    for (final participant in response.exams) {
+      final key = 'blockKey ${participant.exam.examId}';
+      if (!participant.isBlocked && (prefs.getBool(key) ?? false)) {
+        await prefs.setBool(key, false);
+        // Discard any pending offline finish so the student can re-enter the
+        // exam cleanly after being unblocked (instead of having the sync
+        // auto-complete it on their behalf).
+        await OfflineExamStorage.removePendingFinish(participant.examParticipantId);
+      }
+    }
+    return response;
   }
 
   /// Memuat daftar ID ujian yang sudah diunduh dari storage
@@ -80,7 +100,7 @@ class _HomePageState extends State<HomePage> {
 
   void _refreshUjianList() {
     setState(() {
-      _futureExams = _controller.getExamList();
+      _futureExams = _fetchAndSyncExams();
     });
     _loadDownloadedExamIds();
   }
@@ -118,7 +138,7 @@ class _HomePageState extends State<HomePage> {
             color: Color(0xFF11B1E2),
             onRefresh: () async {
               setState(() {
-                _futureExams = _controller.getExamList();
+                _futureExams = _fetchAndSyncExams();
               });
               await _futureExams;
               await _loadDownloadedExamIds();
@@ -320,7 +340,10 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => QuizBlockedPage(examName: examName),
+            builder: (context) => QuizBlockedPage(
+              examName: examName,
+              examParticipant: examParticipant,
+            ),
           ),
         );
         return;
@@ -363,7 +386,10 @@ class _HomePageState extends State<HomePage> {
         if (!mounted) return;
         Navigator.push(
           context,
-          fadeSlideRoute(QuizBlockedPage(examName: examName)),
+          fadeSlideRoute(QuizBlockedPage(
+            examName: examName,
+            examParticipant: examParticipant,
+          )),
         );
       } else {
         Navigator.push(

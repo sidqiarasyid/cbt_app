@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cbt_app/models/exam_response_model.dart';
 import 'package:cbt_app/utils/helpers.dart';
 import 'package:cbt_app/widgets/cards/exam_card.dart';
@@ -22,8 +21,6 @@ class ExamListSection extends StatelessWidget {
     this.downloadingExamIds = const {},
   });
 
-  // Use shared helper from utils/helpers.dart
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,12 +34,12 @@ class ExamListSection extends StatelessWidget {
                 width: 4,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: Color(0xFF11B1E2),
+                  color: const Color(0xFF11B1E2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              SizedBox(width: 12),
-              Text(
+              const SizedBox(width: 12),
+              const Text(
                 'Jadwal Ujian',
                 style: TextStyle(
                   fontSize: 22,
@@ -50,16 +47,16 @@ class ExamListSection extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Color(0xFF11B1E2).withValues(alpha: 0.1),
+                  color: const Color(0xFF11B1E2).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '${examList.length} Ujian',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF11B1E2),
@@ -69,29 +66,22 @@ class ExamListSection extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Expanded(
           child: examList.isEmpty
               ? SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: SizedBox(
                     height: MediaQuery.of(context).size.height * 0.6,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.school_outlined,
-                            size: 64,
-                            color: Colors.grey[300],
-                          ),
-                          SizedBox(height: 16),
+                          Icon(Icons.school_outlined, size: 64, color: Colors.grey[300]),
+                          const SizedBox(height: 16),
                           Text(
                             'Belum ada ujian tersedia',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
+                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                           ),
                         ],
                       ),
@@ -99,17 +89,20 @@ class ExamListSection extends StatelessWidget {
                   ),
                 )
               : ListView.separated(
-                  padding: EdgeInsets.fromLTRB(20, 8, 20, 118),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 118),
                   itemCount: examList.length,
                   itemBuilder: (context, index) {
                     final examParticipant = examList[index];
                     final exam = examParticipant.exam;
 
-                    String examType = ExamTypeHelper.getExamType(exam.examName);
-                    String gradeText = '${exam.gradeLevel} ${exam.major ?? ''}';
+                    final examType = ExamTypeHelper.getExamType(exam.examName);
+                    final gradeText = '${exam.gradeLevel} ${exam.major ?? ''}';
+                    final startLabel = formatDate(exam.startDate.toString());
+                    final endLabel = formatDate(exam.endDate.toString());
 
                     return ExamCard(
-                      date: formatDate(exam.startDate.toString()),
+                      date: startLabel,
+                      endDate: endLabel,
                       subject: exam.examName,
                       school: examType,
                       teacher: exam.subject,
@@ -119,37 +112,27 @@ class ExamListSection extends StatelessWidget {
                       score: examParticipant.result?.finalScore,
                       isDownloaded: downloadedExamIds.contains(exam.examId),
                       isDownloading: downloadingExamIds.contains(exam.examId),
+                      isBlocked: examParticipant.isBlocked,
                       onDownloadPressed: onDownloadExam != null
                           ? () => onDownloadExam!(
-                              examParticipant,
-                              exam.examName,
-                              exam.startDate,
-                              exam.durationMinutes,
-                            )
+                                examParticipant,
+                                exam.examName,
+                                exam.startDate,
+                                exam.durationMinutes,
+                              )
                           : null,
-                      onBtnPressed: (examParticipant.examStatus == 'GRADED' || examParticipant.examStatus == 'COMPLETED')
+                      onBtnPressed: (examParticipant.examStatus == 'GRADED' ||
+                              examParticipant.examStatus == 'COMPLETED')
                           ? () {}
                           : () => onStartExam(
-                              examParticipant,
-                              exam.examName,
-                              exam.startDate,
-                              exam.durationMinutes,
-                            ),
-                    )
-                        .animate()
-                        .fadeIn(
-                          delay: Duration(milliseconds: 50 * index),
-                          duration: 350.ms,
-                        )
-                        .slideY(
-                          begin: 0.12,
-                          end: 0,
-                          delay: Duration(milliseconds: 50 * index),
-                          duration: 350.ms,
-                          curve: Curves.easeOutCubic,
-                        );
+                                examParticipant,
+                                exam.examName,
+                                exam.startDate,
+                                exam.durationMinutes,
+                              ),
+                    );
                   },
-                  separatorBuilder: (context, index) => SizedBox(height: 16),
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
                 ),
         ),
       ],

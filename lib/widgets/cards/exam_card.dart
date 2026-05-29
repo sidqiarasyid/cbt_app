@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class ExamCard extends StatelessWidget {
   final String date;
+  final String? endDate;
   final String subject;
   final String school;
   final String teacher;
@@ -10,14 +11,16 @@ class ExamCard extends StatelessWidget {
   final String imageUrl;
   final VoidCallback onBtnPressed;
   final VoidCallback? onDownloadPressed;
-  final String? status; // Optional status field
-  final double? score; // Optional score field
-  final bool isDownloaded; // Track if exam has been downloaded
-  final bool isDownloading; // Show loading state during download
+  final String? status;
+  final double? score;
+  final bool isDownloaded;
+  final bool isDownloading;
+  final bool isBlocked;
 
   const ExamCard({
     super.key,
     required this.date,
+    this.endDate,
     required this.subject,
     required this.school,
     required this.teacher,
@@ -29,17 +32,114 @@ class ExamCard extends StatelessWidget {
     this.score,
     this.isDownloaded = false,
     this.isDownloading = false,
+    this.isBlocked = false,
   });
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+
+  Color _statusColor(String s) {
+    switch (s) {
+      case 'NOT_STARTED':
+        return Colors.blue.shade600;
+      case 'IN_PROGRESS':
+        return Colors.orange.shade600;
+      case 'GRADED':
+        return Colors.green.shade600;
+      case 'COMPLETED':
+        return Colors.grey.shade600;
+      default:
+        return Colors.blue.shade600;
+    }
+  }
+
+  IconData _statusIcon(String s) {
+    switch (s) {
+      case 'NOT_STARTED':
+        return Icons.schedule_rounded;
+      case 'IN_PROGRESS':
+        return Icons.pending_rounded;
+      case 'GRADED':
+        return Icons.check_circle_rounded;
+      case 'COMPLETED':
+        return Icons.done_all_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  String _statusText(String s) {
+    switch (s) {
+      case 'NOT_STARTED':
+        return 'Belum Mulai';
+      case 'IN_PROGRESS':
+        return 'Berlangsung';
+      case 'GRADED':
+        return 'Sudah Dinilai';
+      case 'COMPLETED':
+        return 'Selesai';
+      default:
+        return s;
+    }
+  }
+
+  String _buttonText() {
+    if (isBlocked) return 'Masukkan Kode';
+    if (status == 'GRADED') return 'Lihat Nilai';
+    if (status == 'IN_PROGRESS') return 'Lanjutkan';
+    return 'Mulai Ujian';
+  }
+
+  // ── badge widget (uniform size) ──────────────────────────────────────────
+
+  Widget _badge({
+    required Color color,
+    required IconData icon,
+    required String text,
+    Gradient? gradient,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: gradient == null ? color : null,
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDone = status == 'GRADED' || status == 'COMPLETED';
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDone ? Colors.grey.shade50 : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: isDone ? 0.04 : 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -48,7 +148,7 @@ class ExamCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image with Date overlay
+          // ── Image with overlays ──────────────────────────────────────────
           Stack(
             children: [
               ClipRRect(
@@ -56,121 +156,85 @@ class ExamCard extends StatelessWidget {
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                 ),
-                child: Container(
-                  height: 160,
-                  width: double.infinity,
-                  decoration: BoxDecoration(color: Colors.grey[300]),
-                  child: Image.asset(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+                child: ColorFiltered(
+                  colorFilter: isDone
+                      ? const ColorFilter.matrix([
+                          0.3, 0.59, 0.11, 0, 0,
+                          0.3, 0.59, 0.11, 0, 0,
+                          0.3, 0.59, 0.11, 0, 0,
+                          0,   0,    0,    1, 0,
+                        ])
+                      : const ColorFilter.mode(Colors.transparent, BlendMode.saturation),
+                  child: Container(
+                    height: 160,
+                    width: double.infinity,
+                    decoration: BoxDecoration(color: Colors.grey[300]),
+                    child: Image.asset(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
                         color: Colors.orange[200],
-                        child: const Icon(
-                          Icons.landscape,
-                          size: 50,
-                          color: Colors.white,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              // Date overlay
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
+                        child: const Icon(Icons.landscape, size: 50, color: Colors.white),
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0xFF11B1E2).withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        date,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
-              // Status badge (if available)
+
+              // Status badge (top-left)
               if (status != null)
                 Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(status!),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
+                  top: 10,
+                  left: 10,
+                  child: isBlocked
+                      ? _badge(
+                          color: Colors.red.shade700,
+                          icon: Icons.lock_rounded,
+                          text: 'Terblokir',
+                        )
+                      : _badge(
+                          color: _statusColor(status!),
+                          icon: _statusIcon(status!),
+                          text: _statusText(status!),
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _getStatusIcon(status!),
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          _getStatusText(status!),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
+
+              // Date badge(s) — top-right
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _badge(
+                      color: Colors.transparent,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
+                      ),
+                      icon: Icons.calendar_today_rounded,
+                      text: date,
+                    ),
+                    if (endDate != null && endDate!.isNotEmpty) ...[
+                      const SizedBox(height: 5),
+                      _badge(
+                        color: Colors.black54,
+                        icon: Icons.event_busy_rounded,
+                        text: endDate!,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
 
-          // Subject and Grade
+          const SizedBox(height: 14),
+
+          // ── Subject + grade row ──────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Column(
@@ -178,10 +242,10 @@ class ExamCard extends StatelessWidget {
                     children: [
                       Text(
                         subject,
-                        style: const TextStyle(
-                          fontSize: 17,
+                        style: TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: isDone ? Colors.grey.shade600 : Colors.black87,
                           height: 1.3,
                         ),
                       ),
@@ -189,31 +253,24 @@ class ExamCard extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: ColorsApp.primaryColor.withValues(alpha: 0.1),
+                              color: ColorsApp.primaryColor.withValues(alpha: isDone ? 0.05 : 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               school,
                               style: TextStyle(
-                                fontSize: 12,
-                                color: ColorsApp.primaryColor,
+                                fontSize: 11,
+                                color: isDone ? Colors.grey.shade500 : ColorsApp.primaryColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          // Show score if available
                           if (score != null) ...[
-                            SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.green.shade50,
                                 borderRadius: BorderRadius.circular(6),
@@ -221,16 +278,12 @@ class ExamCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.star_rounded,
-                                    size: 14,
-                                    color: Colors.orange.shade600,
-                                  ),
-                                  SizedBox(width: 4),
+                                  Icon(Icons.star_rounded, size: 13, color: Colors.orange.shade600),
+                                  const SizedBox(width: 3),
                                   Text(
                                     score!.toStringAsFixed(0),
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 11,
                                       color: Colors.green.shade700,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -245,20 +298,17 @@ class ExamCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: isDone ? Colors.grey.shade100 : Colors.orange.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     grade,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.orange.shade700,
+                      color: isDone ? Colors.grey.shade500 : Colors.orange.shade700,
                     ),
                   ),
                 ),
@@ -267,11 +317,11 @@ class ExamCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // Teacher Info
+          // ── Teacher / subject info ────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(10),
@@ -279,17 +329,20 @@ class ExamCard extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
-                      ),
+                      gradient: isDone
+                          ? null
+                          : const LinearGradient(
+                              colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
+                            ),
+                      color: isDone ? Colors.grey.shade300 : null,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_rounded,
-                      size: 18,
-                      color: Colors.white,
+                      size: 16,
+                      color: isDone ? Colors.grey.shade500 : Colors.white,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -300,18 +353,18 @@ class ExamCard extends StatelessWidget {
                         Text(
                           'Mata Pelajaran',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             color: Colors.grey.shade600,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 1),
                         Text(
                           teacher,
-                          style: const TextStyle(
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                            color: isDone ? Colors.grey.shade600 : Colors.black87,
                           ),
                         ),
                       ],
@@ -321,204 +374,146 @@ class ExamCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Action Buttons - Only show if not GRADED or COMPLETED
-          if (status != 'GRADED' && status != 'COMPLETED')
+          // ── Action buttons ────────────────────────────────────────────────
+          if (!isDone)
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: Column(
                 children: [
-                  // Download Button - show for NOT_STARTED exams that haven't been downloaded
-                  if (status == 'NOT_STARTED' && !isDownloaded)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                  // Blocked shortcut button
+                  if (isBlocked)
+                    _actionButton(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                      ),
+                      icon: Icons.lock_open_rounded,
+                      label: 'Masukkan Kode Unlock',
+                      onPressed: onBtnPressed,
+                    )
+                  else ...[
+                    // Download button
+                    if (status == 'NOT_STARTED' && !isDownloaded)
+                      _actionButton(
+                        gradient: const LinearGradient(
                           colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF4CAF50).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
+                        icon: isDownloading ? null : Icons.download_rounded,
+                        loadingIndicator: isDownloading,
+                        label: isDownloading ? 'Mengunduh...' : 'Unduh Ujian',
                         onPressed: isDownloading ? null : onDownloadPressed,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
-                          disabledBackgroundColor: Colors.transparent,
-                          disabledForegroundColor: Colors.white70,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                        margin: const EdgeInsets.only(bottom: 8),
+                      ),
+
+                    // Downloaded badge
+                    if (isDownloaded && status == 'NOT_STARTED')
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.shade200),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (isDownloading)
-                              SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            else
-                              Icon(Icons.download_rounded, size: 20),
-                            SizedBox(width: 8),
+                            Icon(Icons.check_circle, size: 15, color: Colors.green.shade700),
+                            const SizedBox(width: 5),
                             Text(
-                              isDownloading ? 'Mengunduh...' : 'Unduh Ujian',
+                              'Ujian sudah diunduh — siap offline',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  // Downloaded badge
-                  if (isDownloaded && status == 'NOT_STARTED')
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.green.shade200),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
-                          SizedBox(width: 6),
-                          Text(
-                            'Ujian sudah diunduh - Siap offline',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  // Start/Continue Button - show when downloaded or IN_PROGRESS
-                  if (isDownloaded || status == 'IN_PROGRESS')
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
+
+                    // Start / continue button
+                    if (isDownloaded || status == 'IN_PROGRESS')
+                      _actionButton(
+                        gradient: const LinearGradient(
                           colors: [Color(0xFF11B1E2), Color(0xFF0E8FB5)],
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF11B1E2).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
+                        icon: Icons.arrow_forward_rounded,
+                        label: _buttonText(),
                         onPressed: onBtnPressed,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _getButtonText(),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward_rounded, size: 20),
-                          ],
-                        ),
+                        iconTrailing: true,
                       ),
-                    ),
+                  ],
                 ],
               ),
             )
           else
-            SizedBox(height: 16),
+            const SizedBox(height: 14),
         ],
       ),
     );
   }
 
-  // Helper methods for status
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'NOT_STARTED':
-        return Colors.blue.shade600;
-      case 'IN_PROGRESS':
-        return Colors.orange.shade600;
-      case 'GRADED':
-        return Colors.green.shade600;
-      case 'COMPLETED':
-        return Colors.grey.shade600;
-      default:
-        return Colors.blue.shade600;
-    }
-  }
+  Widget _actionButton({
+    required Gradient gradient,
+    IconData? icon,
+    bool loadingIndicator = false,
+    required String label,
+    VoidCallback? onPressed,
+    bool iconTrailing = false,
+    EdgeInsets? margin,
+  }) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (!iconTrailing) ...[
+          if (loadingIndicator)
+            const SizedBox(
+              width: 17,
+              height: 17,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
+          else if (icon != null)
+            Icon(icon, size: 18),
+          if (icon != null || loadingIndicator) const SizedBox(width: 7),
+        ],
+        Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        if (iconTrailing && icon != null) ...[
+          const SizedBox(width: 7),
+          Icon(icon, size: 18),
+        ],
+      ],
+    );
 
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'NOT_STARTED':
-        return Icons.schedule_rounded;
-      case 'IN_PROGRESS':
-        return Icons.pending_rounded;
-      case 'GRADED':
-        return Icons.check_circle_rounded;
-      case 'COMPLETED':
-        return Icons.done_all_rounded;
-      default:
-        return Icons.info_rounded;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'NOT_STARTED':
-        return 'Belum Mulai';
-      case 'IN_PROGRESS':
-        return 'Sedang Berlangsung';
-      case 'GRADED':
-        return 'Sudah Dinilai';
-      case 'COMPLETED':
-        return 'Selesai';
-      default:
-        return status;
-    }
-  }
-
-  String _getButtonText() {
-    if (status == 'GRADED') {
-      return 'Lihat Nilai';
-    } else if (status == 'IN_PROGRESS') {
-      return 'Lanjutkan';
-    }
-    return 'Mulai Ujian';
+    return Container(
+      width: double.infinity,
+      margin: margin,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          shadowColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          disabledForegroundColor: Colors.white60,
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: child,
+      ),
+    );
   }
 }

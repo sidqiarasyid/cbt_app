@@ -92,7 +92,7 @@ class ExamService {
       }
     }
   // Start Exam - Start exam and get question list
-  Future<StartExamResponseModel> startExam(int examId) async {
+  Future<StartExamResponseModel> startExam(int examId, {String? unlockCode}) async {
     final token = await SessionManager.getToken();
 
     if (token == null) {
@@ -100,6 +100,11 @@ class ExamService {
     }
 
     final url = Uri.parse('${Env.apiBaseUrl}/students/exams/start');
+
+    final body = <String, dynamic>{'exam_id': examId};
+    if (unlockCode != null && unlockCode.isNotEmpty) {
+      body['unlock_code'] = unlockCode;
+    }
 
     try {
       final response = await http
@@ -109,7 +114,7 @@ class ExamService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token',
             },
-            body: jsonEncode({'exam_id': examId}),
+            body: jsonEncode(body),
           )
           .timeout(Duration(seconds: 15));
 
