@@ -13,18 +13,20 @@ Native mobile application for students to take Computer-Based Tests (CBT). Stude
 - **Start Exam** — Begin exam session, receive question list from server
 - **Auto-Save Answers** — Submit answers to server automatically on selection (no manual submit)
 - **Question Types** — Single Choice, Multiple Choice, Essay text response
-- **Countdown Timer** — Real-time timer based on global `end_date` deadline
-- **Question Navigation** — View all questions at once, jump to any question
+- **Question Image Attachments** — Backend `/uploads/...` paths resolved through `Env.resolveAssetUrl` so images render correctly across local, ngrok, and production hosts
+- **Countdown Timer** — Real-time timer based on global `end_date` deadline (`ExamSessionProvider`)
+- **Question Navigation** — View all questions at once, jump to any question; UI split into `quiz_header.dart`, `quiz_bottom_nav.dart`, `quiz_question_card.dart`
 - **Progress Tracking** — Visual indicator of answered/unanswered questions
-- **Beautified Dialogs** — Gradient icons, rounded corners, shadow effects on all exam dialogs
+- **Beautified Dialogs** — Gradient icons, rounded corners, shadow effects on all exam dialogs (`quiz_recovery_dialogs.dart` centralises resume / lost-connection flows)
 - **Auto-Finish** — Exam auto-finishes when timer expires (client-side + server-side backup)
 - **Unanswered Warning** — Alert dialog before finishing with unanswered questions
+- **Offline Resilience** — `OfflineExamStorage` caches the exam payload + pending answers; `OfflineSyncService` re-sends queued answers and finish requests once the network returns
 
 ### Anti-Cheat System
-- **Background Detection** — App running time tracked; block if backgrounded >10 seconds
+- **Background Detection** — App running time tracked via `AntiCheatObserver`; block if backgrounded >10 seconds
 - **Inactive State Detection** — Detects system overlay (AppLifecycleState.inactive) with 300ms debounce
 - **Blocked Page** — Dedicated UI shown when student is blocked from exam
-- **Unlock Code** — Requires unlock code from exam supervisor (generated via admin dashboard)
+- **Unlock Code Flow** — Student enters unlock code on the blocked page; `ExamController.startExamWithCode` resumes the session in-place without losing prior progress
 - **Persistent State** — Block status persists in local storage (SharedPreferences)
 
 ### History & Results
@@ -33,16 +35,21 @@ Native mobile application for students to take Computer-Based Tests (CBT). Stude
 - **Download Results** — Export results (optional feature)
 
 ### Profile Management
-- **View Profile** — Display name, classroom, grade level, major, profile photo
-- **Edit Profile** — Update name and upload new profile photo
-- **Account Settings** — Change password, manage notifications
-- **Session Logout** — Clear JWT token and return to login screen
+- **Profile Page** — Minimal-modern list layout: hero card (avatar + name + school + class), Informasi section (NISN, Tingkat, Jurusan, Kelas), Akun section (Ubah Password + Logout)
+- **Pull-to-Refresh** — Reload profile + school data
+- **Change Password Bottom Sheet** — Drag-handle modal with three password fields, real-time **strength meter** (4 levels), requirement checklist (min 8 chars, uppercase, digit, symbol), and live confirm-match indicator
+- **Session Logout** — Confirm dialog, clear JWT, return to login
 
 ### Authentication
-- **Login Screen** — Username and password authentication via backend
+- **Login Screen** — Username and password authentication via backend, animated logo (school logo from API → bundled asset → icon fallback chain)
 - **Session Management** — JWT token stored in secure local storage
 - **Auto-Login** — Resume session if token still valid
 - **Logout** — Clear session and return to login
+
+### School Branding
+- **Dynamic Logo** — Home header + login page render `School.logo_url` from `/api/school-profile`, prefixed with `Env.apiOrigin` for `/uploads/...` paths
+- **Dynamic Name** — School name displayed in home header + login title pulls from the same endpoint
+- **Single Source of Truth** — Same backend asset shows in both Flutter and the dashboard
 
 ---
 
@@ -94,6 +101,17 @@ flutter pub get
 ### 3. Configure API URL
 
 The backend base URL is read from a compile-time `--dart-define` flag (`API_BASE_URL`). The default value lives in [`lib/config/env.dart`](lib/config/env.dart) and is used when no flag is passed.
+
+The `Env` class also exposes two helpers used by every asset-rendering screen:
+
+```dart
+Env.apiOrigin               // -> "https://example.com" (API URL minus trailing /api)
+Env.resolveAssetUrl(value)  // null/empty -> null
+                            // http(s)://... -> unchanged
+                            // /uploads/... -> "${Env.apiOrigin}/uploads/..."
+```
+
+This lets the same `logo_url` and `question_image` values that the dashboard stores resolve correctly on whatever host the Flutter build happens to point at.
 
 **Android Emulator (local dev):**
 ```bash
@@ -382,7 +400,8 @@ lib/
 │   └── quiz_model.dart               # Per-question model
 ├── providers/
 │   ├── auth_provider.dart            # Auth status, login/logout, bootstrap
-│   └── connectivity_provider.dart    # Periodic online/offline polling
+│   ├── connectivity_provider.dart    # Periodic online/offline polling
+│   └── exam_session_provider.dart    # Quiz session: timer, answers, submit state
 ├── services/
 │   ├── auth_service.dart             # API: POST /auth/login, /auth/logout
 │   ├── exam_service.dart             # API: students/exams/*, exam-results/*
@@ -410,9 +429,14 @@ lib/
 ├── widgets/
 │   ├── cards/                        # exam_card, history_card
 │   ├── common/                       # error_state, loading_state, picker_item
-│   ├── dialogs/                      # All *_dialog.dart
-│   ├── home/                         # home_header, exam_list_section, navbar
-│   └── quiz/                         # (reserved for split-out quiz subwidgets)
+│   ├── dialogs/                      # All *_dialog.dart (incl. change_password_dialog: bottom sheet + strength meter)
+│   ├── home/                         # home_header (school logo + name), exam_list_section, navbar
+│   └── quiz/                         # Split-out quiz widgets (extracted from monolithic quiz_page)
+│       ├── anti_cheat_observer.dart  # AppLifecycleState observer + block transition
+│       ├── quiz_header.dart          # Title + timer + close button
+│       ├── quiz_bottom_nav.dart      # Prev / Next / Finish controls
+│       ├── quiz_question_card.dart   # Per-question render (image + text + answer area)
+│       └── quiz_recovery_dialogs.dart # Resume / reconnect / unsaved-answer dialogs
 └── style/
     └── style.dart                    # Colors + theme
 
@@ -451,29 +475,33 @@ This dual approach ensures exams are always finalized even if the app crashes or
 
 ## Anti-Cheat System
 
-The app monitors `AppLifecycleState` changes:
+The `AntiCheatObserver` (mounted by `quiz_page.dart`) watches `AppLifecycleState`:
 
-1. When app goes to background → records timestamp
-2. When app receives `inactive` state → starts 300ms debounce timer (prevents false triggers from system dialogs)
-3. When app returns to foreground → checks elapsed time
-4. If elapsed > 10 seconds:
+1. App goes to background → records timestamp
+2. App receives `inactive` state → 300 ms debounce (prevents false triggers from system dialogs)
+3. App returns to foreground → checks elapsed time
+4. Elapsed > 10 s:
    - Navigates to `QuizBlockedPage`
    - Blocked state saved to `SharedPreferences` (persists across app restart)
-4. Admin generates an unlock code via the dashboard
-5. Student enters unlock code to resume the exam
+5. Admin generates an unlock code via the dashboard (`/admin/activity/blocked/[examParticipantId]`)
+6. Student enters the unlock code; `ExamController.startExamWithCode` calls `POST /api/students/exams/start` with `unlock_code`, resuming the session and clearing the local block flag
 
 ## API Endpoints Used
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/auth/login` | POST | Student login |
+| `/api/auth/logout` | POST | Server-side logout + activity log |
 | `/api/auth/me` | GET | Get profile |
-| `/api/auth/profile` | PATCH | Update profile (name, photo) |
+| `/api/auth/change-password` | PATCH | Change password from bottom-sheet flow |
 | `/api/students/exams` | GET | List student's assigned exams |
-| `/api/students/exams/start` | POST | Start exam session |
+| `/api/students/exams/start` | POST | Start exam session (accepts optional `unlock_code` for blocked resume) |
 | `/api/students/exams/answer` | POST | Submit answer per question |
 | `/api/students/exams/finish` | POST | Finish exam |
+| `/api/students/exams/report-violation` | POST | Report anti-cheat violation |
 | `/api/exam-results/my-results` | GET | Exam result history |
+| `/api/school-profile` | GET | School name + logo for branding |
+| `/api/time` | GET | Trusted server time for offline clock validation |
 
 ## License
 
