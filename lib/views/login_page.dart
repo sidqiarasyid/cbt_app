@@ -1,5 +1,6 @@
 import 'package:cbt_app/providers/auth_provider.dart';
 import 'package:cbt_app/services/school_profile_service.dart';
+import 'package:cbt_app/config/env.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   bool isPasswordVisible = false;
   bool isLoading = false;
   String _schoolName = 'CBT App';
+  String? _schoolLogoUrl;
 
   static const Color _primaryBlue = Color(0xFF11B1E2);
 
@@ -31,7 +33,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _loadSchoolProfile() async {
     final profile = await SchoolProfileService.fetchProfile();
     if (mounted) {
-      setState(() => _schoolName = profile.schoolName);
+      setState(() {
+        _schoolName = profile.schoolName;
+        _schoolLogoUrl = Env.resolveAssetUrl(profile.logoUrl);
+      });
     }
   }
 
@@ -173,15 +178,29 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/sekolah.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.school_rounded,
-                            size: 40,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: _schoolLogoUrl != null
+                            ? Image.network(
+                                _schoolLogoUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Image.asset(
+                                  'assets/images/sekolah.png',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.school_rounded,
+                                    size: 40,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Image.asset(
+                                'assets/images/sekolah.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.school_rounded,
+                                  size: 40,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ).animate().fadeIn(duration: 500.ms).scale(
                           begin: const Offset(0.7, 0.7),
