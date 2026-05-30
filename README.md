@@ -481,10 +481,18 @@ The `AntiCheatObserver` (mounted by `quiz_page.dart`) watches `AppLifecycleState
 2. App receives `inactive` state → 300 ms debounce (prevents false triggers from system dialogs)
 3. App returns to foreground → checks elapsed time
 4. Elapsed > 10 s:
-   - Navigates to `QuizBlockedPage`
+   - Navigates to `QuizBlockedPage` **with the unlock-code field shown** (the `ExamParticipant` is threaded through so the student can self-unlock on their own device)
    - Blocked state saved to `SharedPreferences` (persists across app restart)
-5. Admin generates an unlock code via the dashboard (`/admin/activity/blocked/[examParticipantId]`)
-6. Student enters the unlock code; `ExamController.startExamWithCode` calls `POST /api/students/exams/start` with `unlock_code`, resuming the session and clearing the local block flag
+5. Admin generates an unlock code via the dashboard (`/admin/activity/blocked/[examParticipantId]`) and hands it to the student
+6. Student enters the unlock code; `ExamController.startExamWithCode` calls `POST /api/students/exams/start` with `unlock_code`, unblocking server-side, **clearing the local block flag**, and resuming from the decrypted package cache (no password re-entry)
+
+### Encrypted Exam Package
+
+Exams are downloaded ahead of time (from H-1) as a **sealed envelope** and only opened on the device when the student enters the exam password the proctor announces at start:
+
+- `ExamService.prefetchEncrypted` downloads the encrypted package (questions, no answer keys); stored via `OfflineExamStorage.cacheEncryptedPackage`
+- At start, `ExamPasswordDialog` collects the password; `ExamCryptoService` decrypts locally (PBKDF2-HMAC-SHA256 → AES-256-GCM, matching the backend)
+- `POST /students/exams/start` then records the session online (status + `start_time`); questions come from the decrypted package, not the response
 
 ## API Endpoints Used
 
@@ -495,7 +503,8 @@ The `AntiCheatObserver` (mounted by `quiz_page.dart`) watches `AppLifecycleState
 | `/api/auth/me` | GET | Get profile |
 | `/api/auth/change-password` | PATCH | Change password from bottom-sheet flow |
 | `/api/students/exams` | GET | List student's assigned exams |
-| `/api/students/exams/start` | POST | Start exam session (accepts optional `unlock_code` for blocked resume) |
+| `/api/students/exams/:examId/prefetch` | GET | Download the encrypted exam package (available H-1) |
+| `/api/students/exams/start` | POST | Start exam session — state only (accepts optional `unlock_code` for blocked resume) |
 | `/api/students/exams/answer` | POST | Submit answer per question |
 | `/api/students/exams/finish` | POST | Finish exam |
 | `/api/students/exams/report-violation` | POST | Report anti-cheat violation |
