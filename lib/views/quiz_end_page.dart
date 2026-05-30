@@ -1,6 +1,5 @@
 import 'package:cbt_app/main.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:cbt_app/models/exam_model.dart';
 import '../utils/page_transitions.dart';
@@ -9,19 +8,33 @@ class QuizEndPage extends StatelessWidget {
   final ExamModel exam;
   final DateTime? submittedAt;
 
-  const QuizEndPage({
-    super.key,
-    required this.exam,
-    this.submittedAt,
-  });
+  const QuizEndPage({super.key, required this.exam, this.submittedAt});
 
   static const Color _primaryBlue = Color(0xFF11B1E2);
 
   String _formatIndo(DateTime dt) {
-    const hari = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+    const hari = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
     const bulan = [
-      'Januari','Februari','Maret','April','Mei','Juni',
-      'Juli','Agustus','September','Oktober','November','Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     final namaHari = hari[(dt.weekday - 1) % 7];
     final namaBulan = bulan[dt.month - 1];
@@ -62,17 +75,12 @@ class QuizEndPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.check_rounded, color: Colors.white, size: 72),
-              )
-                  .animate()
-                  .scale(
-                    begin: const Offset(0, 0),
-                    end: const Offset(1, 1),
-                    duration: 600.ms,
-                    curve: Curves.elasticOut,
-                  )
-                  .then(delay: 100.ms)
-                  .shimmer(duration: 900.ms, color: Colors.white.withValues(alpha: 0.5)),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 72,
+                ),
+              ),
               const SizedBox(height: 32),
               // Title
               const Text(
@@ -82,13 +90,7 @@ class QuizEndPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
-              ).animate().fadeIn(delay: 400.ms, duration: 400.ms).slideY(
-                    begin: 0.3,
-                    end: 0,
-                    delay: 400.ms,
-                    duration: 400.ms,
-                    curve: Curves.easeOutCubic,
-                  ),
+              ),
               const SizedBox(height: 12),
               Text(
                 title,
@@ -107,14 +109,20 @@ class QuizEndPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _primaryBlue.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _primaryBlue.withValues(alpha: 0.15)),
+                  border: Border.all(
+                    color: _primaryBlue.withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.access_time_rounded, size: 18, color: _primaryBlue),
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 18,
+                          color: _primaryBlue,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Waktu Submit',
@@ -150,7 +158,11 @@ class QuizEndPage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline_rounded, size: 18, color: Colors.grey[500]),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: Colors.grey[500],
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -187,6 +199,7 @@ class QuizEndPage extends StatelessWidget {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
