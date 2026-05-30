@@ -9,10 +9,42 @@ import 'package:cbt_app/models/start_exam_response_model.dart';
 class OfflineExamStorage {
   // Keys
   static const String _examDataKey = 'offline_exam_data_';
+  static const String _encryptedPackageKey = 'encrypted_package_';
   static const String _pendingAnswersKey = 'pending_answers_';
   static const String _pendingFinishKey = 'pending_finish_exams';
   static const String _offlineModeKey = 'offline_mode_';
   static const String _downloadedExamsKey = 'downloaded_exam_ids';
+
+  // ==================== ENCRYPTED PACKAGE ====================
+  // The pre-downloaded exam package is stored encrypted (sealed envelope) and
+  // only decrypted in memory once the student enters the exam password.
+
+  /// Store the encrypted envelope downloaded via the prefetch endpoint.
+  static Future<void> cacheEncryptedPackage(
+    int examId,
+    Map<String, dynamic> envelope,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('$_encryptedPackageKey$examId', jsonEncode(envelope));
+  }
+
+  /// Retrieve the stored encrypted envelope, or null if not pre-downloaded.
+  static Future<Map<String, dynamic>?> getEncryptedPackage(int examId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString('$_encryptedPackageKey$examId');
+    if (jsonStr == null) return null;
+    try {
+      return Map<String, dynamic>.from(jsonDecode(jsonStr) as Map);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Remove the stored encrypted envelope (after the exam is finished/cleared).
+  static Future<void> clearEncryptedPackage(int examId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('$_encryptedPackageKey$examId');
+  }
 
   // ==================== DOWNLOAD TRACKING ====================
 
@@ -214,7 +246,9 @@ class OfflineExamStorage {
   }
 
   /// Ambil semua jawaban yang belum tersinkron
-  static Future<List<Map<String, dynamic>>> getPendingAnswers(int examParticipantId) async {
+  static Future<List<Map<String, dynamic>>> getPendingAnswers(
+    int examParticipantId,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_pendingAnswersKey$examParticipantId';
     final jsonStr = prefs.getString(key);
@@ -229,7 +263,10 @@ class OfflineExamStorage {
   }
 
   /// Hapus jawaban yang sudah berhasil disinkron
-  static Future<void> removePendingAnswer(int examParticipantId, int questionId) async {
+  static Future<void> removePendingAnswer(
+    int examParticipantId,
+    int questionId,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_pendingAnswersKey$examParticipantId';
     final jsonStr = prefs.getString(key);

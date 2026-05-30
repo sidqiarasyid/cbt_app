@@ -16,7 +16,7 @@ class ExamService {
       throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
 
-      final url = Uri.parse('${Env.apiBaseUrl}/students/exams');
+    final url = Uri.parse('${Env.apiBaseUrl}/students/exams');
 
     try {
       final response = await http
@@ -50,49 +50,53 @@ class ExamService {
     }
   }
 
-    // Get Exam Results - list of exam results for current student
-    Future<ExamResultListResponse> getStudentExamResults() async {
-      final token = await SessionManager.getToken();
+  // Get Exam Results - list of exam results for current student
+  Future<ExamResultListResponse> getStudentExamResults() async {
+    final token = await SessionManager.getToken();
 
-      if (token == null) {
-        throw Exception('Token tidak ditemukan. Silakan login kembali.');
-      }
-
-      final url = Uri.parse('${Env.apiBaseUrl}/exam-results/my-results');
-
-      try {
-        final response = await http
-            .get(
-              url,
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $token',
-              },
-            )
-            .timeout(Duration(seconds: 10));
-
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-          return ExamResultListResponse.fromJson(bodyMap);
-        } else if (response.statusCode == 401) {
-          throw Exception('Unauthorized. Silakan login kembali.');
-        } else if (response.statusCode == 404) {
-          throw Exception('Exam results data not found.');
-        } else {
-          throw HttpException('Terjadi kesalahan pada server.');
-        }
-      } on TimeoutException {
-        throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
-      } on SocketException {
-        throw Exception(
-          'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
-        );
-      } catch (e) {
-        rethrow;
-      }
+    if (token == null) {
+      throw Exception('Token tidak ditemukan. Silakan login kembali.');
     }
+
+    final url = Uri.parse('${Env.apiBaseUrl}/exam-results/my-results');
+
+    try {
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> bodyMap = jsonDecode(response.body);
+        return ExamResultListResponse.fromJson(bodyMap);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized. Silakan login kembali.');
+      } else if (response.statusCode == 404) {
+        throw Exception('Exam results data not found.');
+      } else {
+        throw HttpException('Terjadi kesalahan pada server.');
+      }
+    } on TimeoutException {
+      throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
+    } on SocketException {
+      throw Exception(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Start Exam - Start exam and get question list
-  Future<StartExamResponseModel> startExam(int examId, {String? unlockCode}) async {
+  Future<StartExamResponseModel> startExam(
+    int examId, {
+    String? unlockCode,
+  }) async {
     final token = await SessionManager.getToken();
 
     if (token == null) {
@@ -124,6 +128,101 @@ class ExamService {
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
         throw Exception(bodyMap['error'] ?? 'Failed to start exam');
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized. Silakan login kembali.');
+      } else {
+        throw HttpException('Terjadi kesalahan pada server.');
+      }
+    } on TimeoutException {
+      throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
+    } on SocketException {
+      throw Exception(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Prefetch - download the encrypted exam package (available H-1).
+  // Returns the `data` object: { exam, exam_participant_id, total_questions, encrypted }.
+  Future<Map<String, dynamic>> prefetchEncrypted(int examId) async {
+    final token = await SessionManager.getToken();
+    if (token == null) {
+      throw Exception('Token tidak ditemukan. Silakan login kembali.');
+    }
+
+    final url = Uri.parse('${Env.apiBaseUrl}/students/exams/$examId/prefetch');
+
+    try {
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        return Map<String, dynamic>.from(body['data'] as Map);
+      } else if (response.statusCode == 400 ||
+          response.statusCode == 403 ||
+          response.statusCode == 404) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(body['error'] ?? 'Gagal mengunduh paket ujian');
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized. Silakan login kembali.');
+      } else {
+        throw HttpException('Terjadi kesalahan pada server.');
+      }
+    } on TimeoutException {
+      throw Exception('Koneksi timeout. Periksa koneksi internet Anda.');
+    } on SocketException {
+      throw Exception(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Start session - begin/resume the exam (state only). Questions come from the
+  // decrypted package, not this response. Returns the raw slim response body.
+  Future<Map<String, dynamic>> startSession(
+    int examId, {
+    String? unlockCode,
+  }) async {
+    final token = await SessionManager.getToken();
+    if (token == null) {
+      throw Exception('Token tidak ditemukan. Silakan login kembali.');
+    }
+
+    final url = Uri.parse('${Env.apiBaseUrl}/students/exams/start');
+    final body = <String, dynamic>{'exam_id': examId};
+    if (unlockCode != null && unlockCode.isNotEmpty) {
+      body['unlock_code'] = unlockCode;
+    }
+
+    try {
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else if (response.statusCode == 400) {
+        final b = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(b['error'] ?? 'Gagal memulai ujian');
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Silakan login kembali.');
       } else {
@@ -232,9 +331,11 @@ class ExamService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
         return bodyMap;
-      } else if (response.statusCode == 400) {
+      } else if (response.statusCode == 400 || response.statusCode == 403) {
+        // 403 = peserta diblokir; surface the server's reason instead of a
+        // generic "server error" so the log/UI is self-explanatory.
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
-        throw Exception(bodyMap['error'] ?? 'Failed to finish exam');
+        throw Exception(bodyMap['error'] ?? 'Gagal menyelesaikan ujian');
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized. Silakan login kembali.');
       } else {

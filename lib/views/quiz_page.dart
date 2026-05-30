@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cbt_app/models/exam_model.dart';
+import 'package:cbt_app/models/exam_response_model.dart';
 import 'package:cbt_app/models/quiz_model.dart';
 import 'package:cbt_app/providers/exam_session_provider.dart';
 import 'package:cbt_app/utils/page_transitions.dart';
@@ -20,8 +21,12 @@ import 'package:cbt_app/widgets/quiz/quiz_question_card.dart';
 import 'package:cbt_app/widgets/quiz/quiz_recovery_dialogs.dart';
 
 class QuizPage extends StatelessWidget {
-  const QuizPage({super.key, required this.exam});
+  const QuizPage({super.key, required this.exam, this.examParticipant});
   final ExamModel exam;
+
+  /// Carried so the blocked screen (anti-cheat) can offer the student the
+  /// unlock-code field on their own device. Null only for legacy callers.
+  final ExamParticipant? examParticipant;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +44,8 @@ class QuizPage extends StatelessWidget {
       return const Scaffold(body: SizedBox.shrink());
     }
     return ChangeNotifierProvider<ExamSessionProvider>(
-      create: (_) => ExamSessionProvider()..start(exam),
+      create: (_) =>
+          ExamSessionProvider()..start(exam, participant: examParticipant),
       child: const AntiCheatObserver(child: _QuizPageBody()),
     );
   }
@@ -107,6 +113,7 @@ class _QuizPageBodyState extends State<_QuizPageBody> {
         QuizBlockedPage(
           examName: session.exam.subject,
           violationTime: DateTime.now(),
+          examParticipant: session.participant,
         ),
       ),
       (route) => false,
@@ -221,6 +228,7 @@ class _QuizPageBodyState extends State<_QuizPageBody> {
                 QuizBlockedPage(
                   examName: session.exam.subject,
                   violationTime: DateTime.now(),
+                  examParticipant: session.participant,
                 ),
               ),
               (route) => false,
@@ -331,7 +339,9 @@ class _QuizPageBodyState extends State<_QuizPageBody> {
         break;
       case FinishResultKind.otherError:
         showErrorDialog(
-            context, 'Gagal menyelesaikan ujian: ${result.message}');
+          context,
+          'Gagal menyelesaikan ujian: ${result.message}',
+        );
         break;
     }
   }
@@ -351,7 +361,9 @@ class _QuizPageBodyState extends State<_QuizPageBody> {
     final session = context.watch<ExamSessionProvider>();
     final qList = session.exam.quizList;
     if (qList.isEmpty) {
-      return const Scaffold(body: Center(child: Text('Tidak ada soal tersedia')));
+      return const Scaffold(
+        body: Center(child: Text('Tidak ada soal tersedia')),
+      );
     }
     final idx = session.currentQuestion.clamp(0, qList.length - 1);
     final QuizModel quiz = qList[idx];
@@ -379,11 +391,16 @@ class _QuizPageBodyState extends State<_QuizPageBody> {
                       transitionBuilder: (child, anim) => FadeTransition(
                         opacity: anim,
                         child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.05, 0),
-                            end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                              parent: anim, curve: Curves.easeOutCubic)),
+                          position:
+                              Tween<Offset>(
+                                begin: const Offset(0.05, 0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: anim,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                              ),
                           child: child,
                         ),
                       ),
@@ -395,8 +412,10 @@ class _QuizPageBodyState extends State<_QuizPageBody> {
                           essayController: _essayController,
                           onEssayChanged: _onEssayChanged,
                           onAnswerSelected: (selectedIndex, {selectedIndices}) {
-                            session.selectAnswer(selectedIndex,
-                                selectedIndices: selectedIndices);
+                            session.selectAnswer(
+                              selectedIndex,
+                              selectedIndices: selectedIndices,
+                            );
                           },
                         ),
                       ),

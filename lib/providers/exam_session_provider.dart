@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cbt_app/models/exam_model.dart';
+import 'package:cbt_app/models/exam_response_model.dart';
 import 'package:cbt_app/models/quiz_model.dart';
 import 'package:cbt_app/services/exam_service.dart';
 import 'package:cbt_app/services/offline_exam_storage.dart';
@@ -17,8 +18,8 @@ class ExamSessionProvider extends ChangeNotifier {
   ExamSessionProvider({
     ExamService? examService,
     OfflineSyncService? syncService,
-  })  : _examService = examService ?? ExamService(),
-        _syncService = syncService ?? OfflineSyncService();
+  }) : _examService = examService ?? ExamService(),
+       _syncService = syncService ?? OfflineSyncService();
 
   final ExamService _examService;
   final OfflineSyncService _syncService;
@@ -26,6 +27,12 @@ class ExamSessionProvider extends ChangeNotifier {
   ExamModel? _exam;
   ExamModel get exam => _exam!;
   bool get hasExam => _exam != null;
+
+  /// The participant record this session was started from. Carried so the
+  /// blocked screen can let the student self-unlock (enter the code on their
+  /// own phone) without an admin having to unblock from the dashboard.
+  ExamParticipant? _participant;
+  ExamParticipant? get participant => _participant;
 
   int _currentQuestion = 0;
   int get currentQuestion => _currentQuestion;
@@ -58,8 +65,9 @@ class ExamSessionProvider extends ChangeNotifier {
   Timer? _inactiveTimer;
   Timer? _connectivityTimer;
 
-  void start(ExamModel exam) {
+  void start(ExamModel exam, {ExamParticipant? participant}) {
     _exam = exam;
+    _participant = participant;
     _initializeTimer();
     _startConnectivityCheck();
   }
@@ -126,8 +134,9 @@ class ExamSessionProvider extends ChangeNotifier {
       final wasOffline = _isOffline;
       bool online;
       try {
-        final result = await InternetAddress.lookup('google.com')
-            .timeout(const Duration(seconds: 3));
+        final result = await InternetAddress.lookup(
+          'google.com',
+        ).timeout(const Duration(seconds: 3));
         online = result.isNotEmpty && result.first.rawAddress.isNotEmpty;
       } catch (_) {
         online = false;
@@ -180,10 +189,12 @@ class ExamSessionProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('blockKey ${_exam!.examId}', true);
 
-    unawaited(_examService.reportViolation(
-      examParticipantId: _exam!.examParticipantId,
-      violationType: violationType,
-    ));
+    unawaited(
+      _examService.reportViolation(
+        examParticipantId: _exam!.examParticipantId,
+        violationType: violationType,
+      ),
+    );
 
     _pendingBlockViolationType = violationType;
     notifyListeners();
@@ -197,7 +208,9 @@ class ExamSessionProvider extends ChangeNotifier {
 
   void selectAnswer(int? selectedIndex, {List<int>? selectedIndices}) {
     final qList = _exam!.quizList;
-    if (qList.isEmpty || _currentQuestion < 0 || _currentQuestion >= qList.length) {
+    if (qList.isEmpty ||
+        _currentQuestion < 0 ||
+        _currentQuestion >= qList.length) {
       return;
     }
     final quiz = qList[_currentQuestion];
@@ -212,7 +225,9 @@ class ExamSessionProvider extends ChangeNotifier {
 
   Future<void> submitCurrentAnswer() async {
     final qList = _exam!.quizList;
-    if (qList.isEmpty || _currentQuestion < 0 || _currentQuestion >= qList.length) {
+    if (qList.isEmpty ||
+        _currentQuestion < 0 ||
+        _currentQuestion >= qList.length) {
       return;
     }
     final quiz = qList[_currentQuestion];
@@ -231,7 +246,9 @@ class ExamSessionProvider extends ChangeNotifier {
   }
 
   Future<void> _submitEssay(QuizModel quiz) async {
-    final text = (quiz.answerEssay?.trim().isEmpty ?? true) ? null : quiz.answerEssay?.trim();
+    final text = (quiz.answerEssay?.trim().isEmpty ?? true)
+        ? null
+        : quiz.answerEssay?.trim();
     await OfflineExamStorage.savePendingAnswer(
       examParticipantId: _exam!.examParticipantId,
       questionId: quiz.questionId,
@@ -328,7 +345,8 @@ class ExamSessionProvider extends ChangeNotifier {
   /// True when the failure was network-related (caller may flash an offline snackbar).
   bool _handleSubmitError(dynamic e) {
     final s = e.toString();
-    final isNetwork = e is SocketException ||
+    final isNetwork =
+        e is SocketException ||
         s.contains('Tidak dapat terhubung') ||
         s.contains('timeout') ||
         s.contains('SocketException');
@@ -376,8 +394,9 @@ class ExamSessionProvider extends ChangeNotifier {
 
   Future<bool> hasInternet() async {
     try {
-      final result = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 5));
+      final result = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 5));
       return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
     } catch (_) {
       return false;
@@ -403,7 +422,8 @@ class ExamSessionProvider extends ChangeNotifier {
       return const FinishResult.success();
     } catch (e) {
       final s = e.toString();
-      final isNetwork = e is SocketException ||
+      final isNetwork =
+          e is SocketException ||
           s.contains('Tidak dapat terhubung') ||
           s.contains('timeout') ||
           s.contains('SocketException');
@@ -414,7 +434,8 @@ class ExamSessionProvider extends ChangeNotifier {
 
   String _sanitize(String error) {
     final cleaned = error.replaceFirst(RegExp(r'^Exception:\s*'), '');
-    if (cleaned.contains('SocketException') || cleaned.contains('HttpException')) {
+    if (cleaned.contains('SocketException') ||
+        cleaned.contains('HttpException')) {
       return 'Tidak dapat terhubung ke server.';
     }
     return cleaned;
@@ -463,10 +484,12 @@ class ExamSessionProvider extends ChangeNotifier {
   Future<String> markExitedAndBlock() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('blockKey ${_exam!.examId}', true);
-    unawaited(_examService.reportViolation(
-      examParticipantId: _exam!.examParticipantId,
-      violationType: 'EXAM_EXITED',
-    ));
+    unawaited(
+      _examService.reportViolation(
+        examParticipantId: _exam!.examParticipantId,
+        violationType: 'EXAM_EXITED',
+      ),
+    );
     return 'EXAM_EXITED';
   }
 
@@ -486,7 +509,8 @@ class FinishResult {
   const FinishResult.success() : this._(FinishResultKind.success);
   const FinishResult.noInternet() : this._(FinishResultKind.noInternet);
   const FinishResult.networkError() : this._(FinishResultKind.networkError);
-  const FinishResult.otherError(String msg) : this._(FinishResultKind.otherError, msg);
+  const FinishResult.otherError(String msg)
+    : this._(FinishResultKind.otherError, msg);
 }
 
 enum FinishResultKind { success, noInternet, networkError, otherError }

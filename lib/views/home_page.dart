@@ -6,6 +6,7 @@ import 'package:cbt_app/services/offline_exam_storage.dart';
 import 'package:cbt_app/services/offline_sync_service.dart';
 import 'package:cbt_app/widgets/dialogs/start_dialog.dart';
 import 'package:cbt_app/widgets/dialogs/download_dialog.dart';
+import 'package:cbt_app/widgets/dialogs/exam_password_dialog.dart';
 import 'package:cbt_app/widgets/home/home_header.dart';
 import 'package:cbt_app/widgets/home/exam_list_section.dart';
 import 'package:cbt_app/widgets/common/loading_state.dart';
@@ -53,7 +54,9 @@ class _HomePageState extends State<HomePage> {
         // Discard any pending offline finish so the student can re-enter the
         // exam cleanly after being unblocked (instead of having the sync
         // auto-complete it on their behalf).
-        await OfflineExamStorage.removePendingFinish(participant.examParticipantId);
+        await OfflineExamStorage.removePendingFinish(
+          participant.examParticipantId,
+        );
       }
     }
     return response;
@@ -73,7 +76,7 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() => _hasPendingSync = hasPending);
     }
-    
+
     if (hasPending) {
       final result = await _syncService.syncAllPending();
       if (mounted) {
@@ -107,7 +110,8 @@ class _HomePageState extends State<HomePage> {
 
   String _sanitizeError(String error) {
     final cleaned = error.replaceFirst(RegExp(r'^Exception:\s*'), '');
-    if (cleaned.contains('SocketException') || cleaned.contains('HttpException')) {
+    if (cleaned.contains('SocketException') ||
+        cleaned.contains('HttpException')) {
       return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
     }
     return cleaned;
@@ -157,7 +161,9 @@ class _HomePageState extends State<HomePage> {
                       decoration: BoxDecoration(
                         color: Colors.orange[50],
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                        border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -256,7 +262,11 @@ class _HomePageState extends State<HomePage> {
             children: [
               Icon(Icons.check_circle, color: Colors.white, size: 18),
               SizedBox(width: 8),
-              Expanded(child: Text('Ujian "$examName" berhasil diunduh! Siap dikerjakan offline.')),
+              Expanded(
+                child: Text(
+                  'Paket ujian "$examName" berhasil diunduh. Masukkan password saat ujian dimulai.',
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.green[700],
@@ -276,7 +286,9 @@ class _HomePageState extends State<HomePage> {
             children: [
               Icon(Icons.error_outline, color: Colors.white, size: 18),
               SizedBox(width: 8),
-              Expanded(child: Text('Gagal mengunduh: ${_sanitizeError(e.toString())}')),
+              Expanded(
+                child: Text('Gagal mengunduh: ${_sanitizeError(e.toString())}'),
+              ),
             ],
           ),
           backgroundColor: Colors.red[700],
@@ -313,131 +325,68 @@ class _HomePageState extends State<HomePage> {
     String examName,
     DateTime startDate,
   ) async {
-    Navigator.pop(context); // Close dialog
-    showLoadingDialog(context, message: 'Memuat soal ujian...');
+    Navigator.pop(context); // Close the start dialog
 
     final examId = examParticipant.exam.examId;
 
+    // Blocked students go to the blocked page (unlock-code flow), not here.
+    final blockStatus = await _controller.checkBlockStatus(examId);
+    if (blockStatus || examParticipant.isBlocked) {
+      if (examParticipant.isBlocked && !blockStatus) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('blockKey $examId', true);
+      }
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        fadeSlideRoute(
+          QuizBlockedPage(examName: examName, examParticipant: examParticipant),
+        ),
+      );
+      return;
+    }
+
+    // Validate the exam time window (trusted server time) before prompting.
     try {
-      // Validate trusted time before allowing entry. This prevents clock
-      // tampering: device time alone is not enough to determine whether the
-      // exam window is open.
       await _controller.ensureExamWindowOpen(
         startDate: examParticipant.exam.startDate,
         endDate: examParticipant.exam.endDate,
       );
+    } catch (e) {
+      if (!mounted) return;
+      showErrorDialog(context, _sanitizeError(e.toString()));
+      return;
+    }
 
-      // Check block status first (works offline via SharedPreferences)
-      final blockStatus = await _controller.checkBlockStatus(examId);
+    // Ask for the exam password the proctor announced; cancel = abort.
+    if (!mounted) return;
+    final password = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => ExamPasswordDialog(examName: examName),
+    );
+    if (password == null || password.isEmpty || !mounted) return;
 
-      if (blockStatus || examParticipant.isBlocked) {
-        if (examParticipant.isBlocked && !blockStatus) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('blockKey $examId', true);
-        }
-        if (!mounted) return;
-        Navigator.pop(context); // Close loading
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => QuizBlockedPage(
-              examName: examName,
-              examParticipant: examParticipant,
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Try to load from cache first (supports offline start)
-      final isDownloaded = await OfflineExamStorage.isExamDownloaded(examId);
-
-      if (isDownloaded) {
-        // Load from cache — works offline
-        final cachedExam = await _controller.startExamFromCache(examId);
-        if (cachedExam != null) {
-          if (!mounted) return;
-          Navigator.pop(context); // Close loading
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => QuizPage(exam: cachedExam)),
-          ).then((_) => _refreshUjianList());
-          return;
-        }
-      }
-
-      // Not downloaded or cache missing — call API
-      final examModel = await _controller.startExam(
+    showLoadingDialog(context, message: 'Membuka paket & memulai ujian...');
+    try {
+      final examModel = await _controller.startExamWithPassword(
         examParticipant,
         examName,
         startDate,
+        password: password,
       );
-
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-
-      // Check both local block (SharedPreferences) and server block
-      if (blockStatus || examParticipant.isBlocked) {
-        // Sync local block status if server says blocked
-        if (examParticipant.isBlocked && !blockStatus) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('blockKey ${examParticipant.exam.examId}', true);
-        }
-        if (!mounted) return;
-        Navigator.push(
-          context,
-          fadeSlideRoute(QuizBlockedPage(
-            examName: examName,
-            examParticipant: examParticipant,
-          )),
-        );
-      } else {
-        Navigator.push(
-          context,
-          fadeSlideRoute(QuizPage(exam: examModel)),
-        ).then((_) => _refreshUjianList());
-      }
+      Navigator.push(
+        context,
+        fadeSlideRoute(
+          QuizPage(exam: examModel, examParticipant: examParticipant),
+        ),
+      ).then((_) => _refreshUjianList());
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context); // Close loading
-
-      // Check if it's a network error — try cache fallback
-      if (e.toString().contains('Tidak dapat terhubung') ||
-          e.toString().contains('timeout') ||
-          e.toString().contains('SocketException')) {
-        final cachedExam = await _controller.startExamFromCache(examId);
-        if (cachedExam != null && mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => QuizPage(exam: cachedExam)),
-          ).then((_) => _refreshUjianList());
-          return;
-        }
-        _showOfflineError(examName);
-      } else {
-        showErrorDialog(context, _sanitizeError(e.toString()));
-      }
+      showErrorDialog(context, _sanitizeError(e.toString()));
     }
-  }
-
-  void _showOfflineError(String examName) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.wifi_off, color: Colors.white, size: 18),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Tidak ada koneksi. Unduh ujian "$examName" terlebih dahulu saat online.',
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.red[700],
-        duration: Duration(seconds: 4),
-      ),
-    );
   }
 }

@@ -5,7 +5,9 @@ import 'package:cbt_app/models/quiz_model.dart';
 import 'package:cbt_app/models/exam_model.dart';
 import 'package:cbt_app/models/exam_response_model.dart';
 import 'package:cbt_app/models/exam_result_response_model.dart';
+import 'package:cbt_app/models/start_exam_response_model.dart';
 import 'package:cbt_app/services/exam_service.dart';
+import 'package:cbt_app/services/exam_crypto_service.dart';
 import 'package:cbt_app/services/offline_exam_storage.dart';
 import 'package:cbt_app/services/offline_sync_service.dart';
 import 'package:cbt_app/services/time_service.dart';
@@ -29,22 +31,24 @@ class ExamController {
   /// Memanggil startExam API → cache data ke SharedPreferences.
   /// Juga merekam offset waktu server untuk validasi tepercaya saat memulai
   /// ujian secara offline nanti (mencegah cheating dengan mengubah jam perangkat).
-  Future<ExamModel> downloadExam(
+  /// Unduh paket ujian TERENKRIPSI (tersedia H-1). Paket disimpan sebagai
+  /// envelope tersegel dan baru bisa dibuka saat siswa memasukkan password
+  /// ujian (diumumkan pengawas) ketika memulai. Tidak memulai sesi.
+  Future<void> downloadExam(
     ExamParticipant examParticipant,
     String examName,
     DateTime startDate,
   ) async {
-    // Best-effort: capture trusted server time offset for later offline starts.
-    // If this fails the download still proceeds — startExam below requires
-    // network anyway and the backend validates the time window server-side.
+    // Best-effort: capture trusted server time offset for the start-time check.
     try {
       await TimeService.fetchServerTime();
     } catch (_) {}
 
-    final examModel = await startExam(examParticipant, examName, startDate);
-    // Tandai bahwa ujian sudah diunduh
-    await OfflineExamStorage.markExamDownloaded(examParticipant.exam.examId);
-    return examModel;
+    final examId = examParticipant.exam.examId;
+    final data = await _examService.prefetchEncrypted(examId);
+    final envelope = Map<String, dynamic>.from(data['encrypted'] as Map);
+    await OfflineExamStorage.cacheEncryptedPackage(examId, envelope);
+    await OfflineExamStorage.markExamDownloaded(examId);
   }
 
   /// Memvalidasi bahwa ujian masih dalam jendela waktunya menggunakan waktu
@@ -62,7 +66,9 @@ class ExamController {
       );
     }
     if (trusted.isBefore(startDate)) {
-      throw Exception('Ujian belum dimulai. Tunggu hingga jadwal yang ditentukan.');
+      throw Exception(
+        'Ujian belum dimulai. Tunggu hingga jadwal yang ditentukan.',
+      );
     }
     if (trusted.isAfter(endDate)) {
       throw Exception('Waktu ujian sudah berakhir.');
@@ -122,26 +128,70 @@ class ExamController {
 
   /// Memulai ujian dan return ExamModel yang siap digunakan.
   /// Juga menyimpan cache data ujian untuk dukungan offline.
+  /// Mulai ujian dengan PASSWORD ujian (diumumkan pengawas). Membuka paket
+  /// terenkripsi secara lokal lalu mencatat sesi ke server (wajib online).
+  /// Jika paket belum diunduh, unduh dulu paket yang sama.
+  Future<ExamModel> startExamWithPassword(
+    ExamParticipant examParticipant,
+    String examName,
+    DateTime startDate, {
+    required String password,
+    String? unlockCode,
+  }) async {
+    final examId = examParticipant.exam.examId;
+
+    // Ensure the encrypted package is present (download the same package now if
+    // the student didn't pre-download).
+    var envelope = await OfflineExamStorage.getEncryptedPackage(examId);
+    if (envelope == null) {
+      final data = await _examService.prefetchEncrypted(examId);
+      envelope = Map<String, dynamic>.from(data['encrypted'] as Map);
+      await OfflineExamStorage.cacheEncryptedPackage(examId, envelope);
+      await OfflineExamStorage.markExamDownloaded(examId);
+    }
+
+    // Open the sealed package locally (throws ExamDecryptException if wrong).
+    final payload = await ExamCryptoService.decryptPayload(envelope, password);
+    final questions = (payload['questions'] as List?) ?? [];
+
+    // Record the session on the server (status, start_time, remaining time).
+    final startResp = await _examService.startSession(
+      examId,
+      unlockCode: unlockCode,
+    );
+    if (unlockCode != null && unlockCode.isNotEmpty) {
+      await setBlockStatus(examId, false);
+    }
+
+    // Merge decrypted questions into the slim response and reuse existing
+    // parsing (also injects existing answers for resume).
+    final merged = <String, dynamic>{...startResp, 'questions': questions};
+    final response = StartExamResponseModel.fromJson(merged);
+    return _assembleExamModel(examParticipant, examName, startDate, response);
+  }
+
+  /// Resume after an anti-cheat block. The package was already opened at first
+  /// start (plaintext cached), so we don't re-ask for the password — we just
+  /// unblock on the server and resume from cache.
   Future<ExamModel> startExamWithCode(
     ExamParticipant examParticipant,
     String examName,
     DateTime startDate, {
     required String unlockCode,
   }) async {
-    final response = await _examService.startExam(
-      examParticipant.exam.examId,
-      unlockCode: unlockCode,
-    );
-    return _assembleExamModel(examParticipant, examName, startDate, response);
-  }
+    final examId = examParticipant.exam.examId;
 
-  Future<ExamModel> startExam(
-    ExamParticipant examParticipant,
-    String examName,
-    DateTime startDate,
-  ) async {
-    final response = await _examService.startExam(examParticipant.exam.examId);
-    return _assembleExamModel(examParticipant, examName, startDate, response);
+    // Unblock server-side (throws if the code is invalid) + clear local flag.
+    await _examService.startSession(examId, unlockCode: unlockCode);
+    await setBlockStatus(examId, false);
+
+    // Resume from the plaintext cache saved at first start.
+    final cached = await startExamFromCache(examId);
+    if (cached != null) return cached;
+
+    throw Exception(
+      'Paket ujian tidak ditemukan. Blokir sudah dibuka — silakan mulai ujian dari menu utama.',
+    );
   }
 
   Future<ExamModel> _assembleExamModel(
@@ -217,13 +267,16 @@ class ExamController {
       );
 
       // Berhasil: hapus dari pending
-      await OfflineExamStorage.removePendingAnswer(examParticipantId, questionId);
+      await OfflineExamStorage.removePendingAnswer(
+        examParticipantId,
+        questionId,
+      );
       return true; // Online submit succeeded
     } on SocketException {
       debugPrint('[ExamController] Offline - jawaban disimpan lokal');
       return false; // Saved offline
     } catch (e) {
-      if (e.toString().contains('Tidak dapat terhubung') || 
+      if (e.toString().contains('Tidak dapat terhubung') ||
           e.toString().contains('timeout') ||
           e.toString().contains('SocketException')) {
         debugPrint('[ExamController] Offline - jawaban disimpan lokal');
@@ -241,15 +294,18 @@ class ExamController {
     // Cek internet dulu
     bool hasInternet = false;
     try {
-      final result = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 5));
+      final result = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 5));
       hasInternet = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } catch (_) {
       hasInternet = false;
     }
 
     if (!hasInternet) {
-      throw Exception('Koneksi internet diperlukan untuk mengirim hasil ujian.');
+      throw Exception(
+        'Koneksi internet diperlukan untuk mengirim hasil ujian.',
+      );
     }
 
     // 1. Sync pending answers dulu
@@ -257,11 +313,11 @@ class ExamController {
 
     // 2. Finish di server
     final result = await _examService.finishExam(examParticipantId);
-    
+
     // Berhasil - bersihkan data offline
     await OfflineExamStorage.clearPendingAnswers(examParticipantId);
     await OfflineExamStorage.removePendingFinish(examParticipantId);
-    
+
     return result;
   }
 
