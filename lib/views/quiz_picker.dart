@@ -368,7 +368,7 @@ class _QuizPickerState extends State<QuizPicker> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Soal ${start + 1} – $end',
+                'Soal ${start + 1} - $end',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -461,7 +461,7 @@ class _QuizPickerState extends State<QuizPicker> {
                 Expanded(
                   child: Text(
                     _allAnswered
-                        ? 'Semua soal telah dijawab — siap dikirim'
+                        ? 'Semua soal telah dijawab - siap dikirim'
                         : '$_unansweredCount soal belum dijawab',
                     style: TextStyle(
                       fontSize: 13,
