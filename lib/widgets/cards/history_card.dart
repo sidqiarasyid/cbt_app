@@ -45,14 +45,6 @@ class HistoryCard extends StatelessWidget {
     return ColorsApp.pillStrokeColorRed;
   }
 
-  Color get _statusBgColor {
-    if (_isNotAttempted) return Colors.grey[100]!;
-    if (_isGraded && !_isExamEnded) return const Color(0xFFFFF8E1);
-    if (_isCompleted && _isExamEnded) return const Color(0xFFFFF3E0); // essay not graded
-    if (_isFullyGraded) return ColorsApp.pillFillColorGreen;
-    return ColorsApp.pillFillColorRed;
-  }
-
   String get _statusLabel {
     if (_isNotAttempted) return 'Tidak Mengerjakan';
     if (_isGraded && !_isExamEnded) return 'Menunggu Tenggat';
@@ -119,7 +111,7 @@ class HistoryCard extends StatelessWidget {
         children: [
           // Top row: Exam name + Status badge
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Subject icon
               Container(
@@ -223,11 +215,11 @@ class HistoryCard extends StatelessWidget {
 
   Widget _buildStatusBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: _statusBgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _statusColor.withValues(alpha: 0.3)),
+        color: _statusColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _statusColor.withValues(alpha: 0.15)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

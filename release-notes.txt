@@ -1,0 +1,4 @@
+CBT App v1.0.1 (build 2)
+
+- Audit pass: static analysis clean, unit tests passing.
+- Maintenance and stability update.
