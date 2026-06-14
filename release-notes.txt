@@ -1,4 +1,5 @@
-CBT App v1.0.1 (build 2)
+CBT App v1.0.1 (build 3)
 
-- Audit pass: static analysis clean, unit tests passing.
-- Maintenance and stability update.
+- Fix: aplikasi kini bisa terhubung ke server pada build rilis
+  (menambahkan permission INTERNET yang sebelumnya hanya ada di build debug).
+- Penyesuaian tampilan badge status pada kartu riwayat.
