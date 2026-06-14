@@ -37,11 +37,11 @@ class SchoolProfileService {
         return _cache!;
       }
     } on SocketException {
-      // No internet — use cache or fallback
+      // No internet - use cache or fallback
     } on TimeoutException {
-      // Timeout — use cache or fallback
+      // Timeout - use cache or fallback
     } catch (_) {
-      // Any other error — use cache or fallback
+      // Any other error - use cache or fallback
     }
 
     return _cache ?? SchoolProfileModel.fallback();

@@ -43,7 +43,7 @@ class ExamCryptoService {
       final decoded = jsonDecode(utf8.decode(clearBytes));
       return Map<String, dynamic>.from(decoded as Map);
     } on SecretBoxAuthenticationError {
-      // Wrong password or tampered data — GCM tag mismatch.
+      // Wrong password or tampered data - GCM tag mismatch.
       throw const ExamDecryptException('Password salah atau paket ujian rusak');
     } catch (_) {
       throw const ExamDecryptException('Gagal membuka paket ujian');

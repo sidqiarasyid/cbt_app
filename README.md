@@ -9,47 +9,47 @@ Native mobile application for students to take Computer-Based Tests (CBT). Stude
 ## Features
 
 ### Exam Taking
-- **Exam List** — View all assigned exams with status (SCHEDULED, ONGOING)
-- **Start Exam** — Begin exam session, receive question list from server
-- **Auto-Save Answers** — Submit answers to server automatically on selection (no manual submit)
-- **Question Types** — Single Choice, Multiple Choice, Essay text response
-- **Question Image Attachments** — Backend `/uploads/...` paths resolved through `Env.resolveAssetUrl` so images render correctly across local, ngrok, and production hosts
-- **Countdown Timer** — Real-time timer based on global `end_date` deadline (`ExamSessionProvider`)
-- **Question Navigation** — View all questions at once, jump to any question; UI split into `quiz_header.dart`, `quiz_bottom_nav.dart`, `quiz_question_card.dart`
-- **Progress Tracking** — Visual indicator of answered/unanswered questions
-- **Beautified Dialogs** — Gradient icons, rounded corners, shadow effects on all exam dialogs (`quiz_recovery_dialogs.dart` centralises resume / lost-connection flows)
-- **Auto-Finish** — Exam auto-finishes when timer expires (client-side + server-side backup)
-- **Unanswered Warning** — Alert dialog before finishing with unanswered questions
-- **Offline Resilience** — `OfflineExamStorage` caches the exam payload + pending answers; `OfflineSyncService` re-sends queued answers and finish requests once the network returns
+- **Exam List** - View all assigned exams with status (SCHEDULED, ONGOING)
+- **Start Exam** - Begin exam session, receive question list from server
+- **Auto-Save Answers** - Submit answers to server automatically on selection (no manual submit)
+- **Question Types** - Single Choice, Multiple Choice, Essay text response
+- **Question Image Attachments** - Backend `/uploads/...` paths resolved through `Env.resolveAssetUrl` so images render correctly across local, ngrok, and production hosts
+- **Countdown Timer** - Real-time timer based on global `end_date` deadline (`ExamSessionProvider`)
+- **Question Navigation** - View all questions at once, jump to any question; UI split into `quiz_header.dart`, `quiz_bottom_nav.dart`, `quiz_question_card.dart`
+- **Progress Tracking** - Visual indicator of answered/unanswered questions
+- **Beautified Dialogs** - Gradient icons, rounded corners, shadow effects on all exam dialogs (`quiz_recovery_dialogs.dart` centralises resume / lost-connection flows)
+- **Auto-Finish** - Exam auto-finishes when timer expires (client-side + server-side backup)
+- **Unanswered Warning** - Alert dialog before finishing with unanswered questions
+- **Offline Resilience** - `OfflineExamStorage` caches the exam payload + pending answers; `OfflineSyncService` re-sends queued answers and finish requests once the network returns
 
 ### Anti-Cheat System
-- **Background Detection** — App running time tracked via `AntiCheatObserver`; block if backgrounded >10 seconds
-- **Inactive State Detection** — Detects system overlay (AppLifecycleState.inactive) with 300ms debounce
-- **Blocked Page** — Dedicated UI shown when student is blocked from exam
-- **Unlock Code Flow** — Student enters unlock code on the blocked page; `ExamController.startExamWithCode` resumes the session in-place without losing prior progress
-- **Persistent State** — Block status persists in local storage (SharedPreferences)
+- **Background Detection** - App running time tracked via `AntiCheatObserver`; block if backgrounded >10 seconds
+- **Inactive State Detection** - Detects system overlay (AppLifecycleState.inactive) with 300ms debounce
+- **Blocked Page** - Dedicated UI shown when student is blocked from exam
+- **Unlock Code Flow** - Student enters unlock code on the blocked page; `ExamController.startExamWithCode` resumes the session in-place without losing prior progress
+- **Persistent State** - Block status persists in local storage (SharedPreferences)
 
 ### History & Results
-- **History Tab** — List of completed exams with final scores
-- **Result Detail** — Final score, submission timestamp, question breakdown
-- **Download Results** — Export results (optional feature)
+- **History Tab** - List of completed exams with final scores
+- **Result Detail** - Final score, submission timestamp, question breakdown
+- **Download Results** - Export results (optional feature)
 
 ### Profile Management
-- **Profile Page** — Minimal-modern list layout: hero card (avatar + name + school + class), Informasi section (NISN, Tingkat, Jurusan, Kelas), Akun section (Ubah Password + Logout)
-- **Pull-to-Refresh** — Reload profile + school data
-- **Change Password Bottom Sheet** — Drag-handle modal with three password fields, real-time **strength meter** (4 levels), requirement checklist (min 8 chars, uppercase, digit, symbol), and live confirm-match indicator
-- **Session Logout** — Confirm dialog, clear JWT, return to login
+- **Profile Page** - Minimal-modern list layout: hero card (avatar + name + school + class), Informasi section (NISN, Tingkat, Jurusan, Kelas), Akun section (Ubah Password + Logout)
+- **Pull-to-Refresh** - Reload profile + school data
+- **Change Password Bottom Sheet** - Drag-handle modal with three password fields, real-time **strength meter** (4 levels), requirement checklist (min 8 chars, uppercase, digit, symbol), and live confirm-match indicator
+- **Session Logout** - Confirm dialog, clear JWT, return to login
 
 ### Authentication
-- **Login Screen** — Username and password authentication via backend, animated logo (school logo from API → bundled asset → icon fallback chain)
-- **Session Management** — JWT token stored in secure local storage
-- **Auto-Login** — Resume session if token still valid
-- **Logout** — Clear session and return to login
+- **Login Screen** - Username and password authentication via backend, animated logo (school logo from API → bundled asset → icon fallback chain)
+- **Session Management** - JWT token stored in secure local storage
+- **Auto-Login** - Resume session if token still valid
+- **Logout** - Clear session and return to login
 
 ### School Branding
-- **Dynamic Logo** — Home header + login page render `School.logo_url` from `/api/school-profile`, prefixed with `Env.apiOrigin` for `/uploads/...` paths
-- **Dynamic Name** — School name displayed in home header + login title pulls from the same endpoint
-- **Single Source of Truth** — Same backend asset shows in both Flutter and the dashboard
+- **Dynamic Logo** - Home header + login page render `School.logo_url` from `/api/school-profile`, prefixed with `Env.apiOrigin` for `/uploads/...` paths
+- **Dynamic Name** - School name displayed in home header + login title pulls from the same endpoint
+- **Single Source of Truth** - Same backend asset shows in both Flutter and the dashboard
 
 ---
 
@@ -269,12 +269,12 @@ cbt_app/
 
 ### Key Files
 
-- **`lib/main.dart`** — App initialization, theme, root navigation
-- **`lib/utils/url.dart`** — API endpoint configuration (emulator vs device)
-- **`lib/utils/session_manager.dart`** — JWT token persistence via SharedPreferences
-- **`lib/views/quiz_page.dart`** — Main exam-taking interface
-- **`lib/controllers/exam_controller.dart`** — Exam state management + auto-save logic
-- **`lib/services/exam_service.dart`** — HTTP calls to backend for exam data
+- **`lib/main.dart`** - App initialization, theme, root navigation
+- **`lib/utils/url.dart`** - API endpoint configuration (emulator vs device)
+- **`lib/utils/session_manager.dart`** - JWT token persistence via SharedPreferences
+- **`lib/views/quiz_page.dart`** - Main exam-taking interface
+- **`lib/controllers/exam_controller.dart`** - Exam state management + auto-save logic
+- **`lib/services/exam_service.dart`** - HTTP calls to backend for exam data
 
 ---
 
@@ -367,18 +367,18 @@ class ExamService {
 
 ### Code Style
 
-- **Architecture** — MVC + Provider: Models, Views, Controllers, Services, Providers (`ChangeNotifier`)
-- **Models** — Data classes with `fromJson()` factory constructors for API response parsing
-- **Controllers** — Orchestrate complex flows that span multiple services (e.g. `ExamController`)
-- **Services** — HTTP calls to backend API endpoints; injected into providers/controllers
-- **Providers** — App-wide state: `AuthProvider`, `ConnectivityProvider` (see `lib/providers/`)
-- **Views** — UI widgets that read providers via `context.watch` / `context.read`
-- **Widgets** — Reusable UI components grouped by purpose (`cards/`, `common/`, `dialogs/`, `home/`, `quiz/`)
-- **Navigation** — `Navigator.push()` / `Navigator.pushReplacement()`
-- **Error Handling** — Try/catch around API calls, `ScaffoldMessenger` for user-facing errors
-- **Session** — JWT token stored via `flutter_secure_storage` and exposed through `SessionManager`
-- **Config** — Backend URL via `--dart-define=API_BASE_URL=...` (see `lib/config/env.dart`)
-- **Linter** — `flutter_lints` + `prefer_single_quotes`, `require_trailing_commas`
+- **Architecture** - MVC + Provider: Models, Views, Controllers, Services, Providers (`ChangeNotifier`)
+- **Models** - Data classes with `fromJson()` factory constructors for API response parsing
+- **Controllers** - Orchestrate complex flows that span multiple services (e.g. `ExamController`)
+- **Services** - HTTP calls to backend API endpoints; injected into providers/controllers
+- **Providers** - App-wide state: `AuthProvider`, `ConnectivityProvider` (see `lib/providers/`)
+- **Views** - UI widgets that read providers via `context.watch` / `context.read`
+- **Widgets** - Reusable UI components grouped by purpose (`cards/`, `common/`, `dialogs/`, `home/`, `quiz/`)
+- **Navigation** - `Navigator.push()` / `Navigator.pushReplacement()`
+- **Error Handling** - Try/catch around API calls, `ScaffoldMessenger` for user-facing errors
+- **Session** - JWT token stored via `flutter_secure_storage` and exposed through `SessionManager`
+- **Config** - Backend URL via `--dart-define=API_BASE_URL=...` (see `lib/config/env.dart`)
+- **Linter** - `flutter_lints` + `prefer_single_quotes`, `require_trailing_commas`
 
 ### Project Structure
 
@@ -504,7 +504,7 @@ Exams are downloaded ahead of time (from H-1) as a **sealed envelope** and only 
 | `/api/auth/change-password` | PATCH | Change password from bottom-sheet flow |
 | `/api/students/exams` | GET | List student's assigned exams |
 | `/api/students/exams/:examId/prefetch` | GET | Download the encrypted exam package (available H-1) |
-| `/api/students/exams/start` | POST | Start exam session — state only (accepts optional `unlock_code` for blocked resume) |
+| `/api/students/exams/start` | POST | Start exam session - state only (accepts optional `unlock_code` for blocked resume) |
 | `/api/students/exams/answer` | POST | Submit answer per question |
 | `/api/students/exams/finish` | POST | Finish exam |
 | `/api/students/exams/report-violation` | POST | Report anti-cheat violation |

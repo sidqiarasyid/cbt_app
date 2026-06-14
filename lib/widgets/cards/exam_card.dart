@@ -199,7 +199,7 @@ class ExamCard extends StatelessWidget {
                         ),
                 ),
 
-              // Date badge(s) — top-right
+              // Date badge(s) - top-right
               Positioned(
                 top: 10,
                 right: 10,
@@ -423,7 +423,7 @@ class ExamCard extends StatelessWidget {
                             Icon(Icons.check_circle, size: 15, color: Colors.green.shade700),
                             const SizedBox(width: 5),
                             Text(
-                              'Ujian sudah diunduh — siap offline',
+                              'Ujian sudah diunduh - siap offline',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,

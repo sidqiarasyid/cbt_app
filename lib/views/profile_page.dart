@@ -217,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: Column(
         children: [
-          // Avatar — ring + circle with initials
+          // Avatar - ring + circle with initials
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -239,7 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const SizedBox(height: 12),
           Text(
-            _fullName.isNotEmpty ? _fullName : '—',
+            _fullName.isNotEmpty ? _fullName : '-',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 18,

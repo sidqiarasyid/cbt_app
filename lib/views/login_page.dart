@@ -156,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
               padding: EdgeInsets.only(bottom: keyboardHeight),
               child: Column(
                 children: [
-                  // ── Static header area (blue zone) — collapses on keyboard ──
+                  // ── Static header area (blue zone) - collapses on keyboard ──
                   AnimatedContainer(
                     duration: animDuration,
                     curve: animCurve,

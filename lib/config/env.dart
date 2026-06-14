@@ -10,7 +10,7 @@ class Env {
     defaultValue: 'https://crouton-boxlike-dove.ngrok-free.dev/api',
   );
 
-  /// API host without the trailing "/api" — used to build absolute URLs for
+  /// API host without the trailing "/api" - used to build absolute URLs for
   /// static assets the backend serves at "/uploads/...".
   static String get apiOrigin {
     final uri = Uri.parse(apiBaseUrl);
