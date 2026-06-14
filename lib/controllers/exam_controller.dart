@@ -54,7 +54,7 @@ class ExamController {
   /// Memvalidasi bahwa ujian masih dalam jendela waktunya menggunakan waktu
   /// tepercaya (server). Strategi: coba ambil waktu server; jika gagal, pakai
   /// offset yang tersimpan saat unduh. Jika tidak ada keduanya, lempar error
-  /// — siswa harus terhubung ke internet sekali sebelum memulai.
+  /// - siswa harus terhubung ke internet sekali sebelum memulai.
   Future<void> ensureExamWindowOpen({
     required DateTime startDate,
     required DateTime endDate,
@@ -171,7 +171,7 @@ class ExamController {
   }
 
   /// Resume after an anti-cheat block. The package was already opened at first
-  /// start (plaintext cached), so we don't re-ask for the password — we just
+  /// start (plaintext cached), so we don't re-ask for the password - we just
   /// unblock on the server and resume from cache.
   Future<ExamModel> startExamWithCode(
     ExamParticipant examParticipant,
@@ -190,7 +190,7 @@ class ExamController {
     if (cached != null) return cached;
 
     throw Exception(
-      'Paket ujian tidak ditemukan. Blokir sudah dibuka — silakan mulai ujian dari menu utama.',
+      'Paket ujian tidak ditemukan. Blokir sudah dibuka - silakan mulai ujian dari menu utama.',
     );
   }
 

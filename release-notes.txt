@@ -1,5 +1,4 @@
-CBT App v1.0.1 (build 3)
+CBT App v1.0.2 (build 4)
 
-- Fix: aplikasi kini bisa terhubung ke server pada build rilis
-  (menambahkan permission INTERNET yang sebelumnya hanya ada di build debug).
-- Penyesuaian tampilan badge status pada kartu riwayat.
+- Transisi animasi antar soal pada saat ujian kini lebih halus.
+- Perbaikan kecil dan peningkatan kestabilan.

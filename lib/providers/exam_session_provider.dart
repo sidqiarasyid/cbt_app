@@ -404,10 +404,10 @@ class ExamSessionProvider extends ChangeNotifier {
   }
 
   /// Finish quiz. Returns:
-  /// - `FinishResult.success` — finished, navigate to QuizEndPage.
-  /// - `FinishResult.noInternet` — caller should show "no internet" dialog.
-  /// - `FinishResult.networkError` — connection lost mid-finish.
-  /// - `FinishResult.otherError(message)` — anything else.
+  /// - `FinishResult.success` - finished, navigate to QuizEndPage.
+  /// - `FinishResult.noInternet` - caller should show "no internet" dialog.
+  /// - `FinishResult.networkError` - connection lost mid-finish.
+  /// - `FinishResult.otherError(message)` - anything else.
   Future<FinishResult> finishQuiz() async {
     if (!await hasInternet()) return const FinishResult.noInternet();
     try {

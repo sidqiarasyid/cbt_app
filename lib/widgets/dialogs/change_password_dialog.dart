@@ -448,6 +448,6 @@ class _MatchHint extends StatelessWidget {
   }
 }
 
-// Backwards-compatible alias — existing callers using `ChangePasswordDialog`
+// Backwards-compatible alias - existing callers using `ChangePasswordDialog`
 // continue to work via this re-export.
 typedef ChangePasswordDialog = ChangePasswordSheet;

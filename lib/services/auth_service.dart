@@ -9,7 +9,7 @@ import 'package:cbt_app/utils/session_manager.dart';
 
 class AuthService {
   /// Notify the server about logout so it can record an activity log.
-  /// Silent on failure — caller still proceeds with local cleanup.
+  /// Silent on failure - caller still proceeds with local cleanup.
   Future<void> serverLogout() async {
     final token = await SessionManager.getToken();
     if (token == null || token.isEmpty) return;
