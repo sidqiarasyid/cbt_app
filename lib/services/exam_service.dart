@@ -5,10 +5,21 @@ import 'package:cbt_app/models/start_exam_response_model.dart';
 import 'package:cbt_app/models/exam_response_model.dart';
 import 'package:cbt_app/models/exam_result_response_model.dart';
 import 'package:cbt_app/utils/session_manager.dart';
+import 'package:cbt_app/utils/session_guard.dart';
 import 'package:cbt_app/config/env.dart';
 import 'package:http/http.dart' as http;
 
 class ExamService {
+  // A 401 here means the session was superseded (logged in on another device).
+  Never _handleUnauthorized() {
+    SessionGuard.forceLogout(
+      message: 'Akun login di perangkat lain. Silakan login kembali.',
+    );
+    throw SessionExpiredException(
+      'Akun login di perangkat lain. Silakan login kembali.',
+    );
+  }
+
   Future<ExamResponseModel> getStudentExams() async {
     final token = await SessionManager.getToken();
 
@@ -33,7 +44,7 @@ class ExamService {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
         return ExamResponseModel.fromJson(bodyMap);
       } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Silakan login kembali.');
+        _handleUnauthorized();
       } else if (response.statusCode == 404) {
         throw Exception('Exam data not found.');
       } else {
@@ -75,7 +86,7 @@ class ExamService {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
         return ExamResultListResponse.fromJson(bodyMap);
       } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Silakan login kembali.');
+        _handleUnauthorized();
       } else if (response.statusCode == 404) {
         throw Exception('Exam results data not found.');
       } else {
@@ -129,7 +140,7 @@ class ExamService {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
         throw Exception(bodyMap['error'] ?? 'Failed to start exam');
       } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Silakan login kembali.');
+        _handleUnauthorized();
       } else {
         throw HttpException('Terjadi kesalahan pada server.');
       }
@@ -174,7 +185,7 @@ class ExamService {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         throw Exception(body['error'] ?? 'Gagal mengunduh paket ujian');
       } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Silakan login kembali.');
+        _handleUnauthorized();
       } else {
         throw HttpException('Terjadi kesalahan pada server.');
       }
@@ -224,7 +235,7 @@ class ExamService {
         final b = jsonDecode(response.body) as Map<String, dynamic>;
         throw Exception(b['error'] ?? 'Gagal memulai ujian');
       } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Silakan login kembali.');
+        _handleUnauthorized();
       } else {
         throw HttpException('Terjadi kesalahan pada server.');
       }
@@ -291,7 +302,7 @@ class ExamService {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
         throw Exception(bodyMap['error'] ?? 'Failed to save answer');
       } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Silakan login kembali.');
+        _handleUnauthorized();
       } else {
         throw HttpException('Terjadi kesalahan pada server.');
       }
@@ -337,7 +348,7 @@ class ExamService {
         final Map<String, dynamic> bodyMap = jsonDecode(response.body);
         throw Exception(bodyMap['error'] ?? 'Gagal menyelesaikan ujian');
       } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Silakan login kembali.');
+        _handleUnauthorized();
       } else {
         throw HttpException('Terjadi kesalahan pada server.');
       }

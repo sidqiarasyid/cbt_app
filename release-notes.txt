@@ -1,4 +1,5 @@
-CBT App v1.0.2 (build 4)
+CBT App v1.0.3 (build 5)
 
-- Transisi animasi antar soal pada saat ujian kini lebih halus.
+- Satu akun siswa kini hanya bisa aktif di satu perangkat. Login di perangkat lain otomatis mengeluarkan sesi sebelumnya.
+- Bila login di perangkat lain terjadi saat ujian berlangsung, ujian akan terkunci dan memerlukan kode unlock dari admin/pengawas.
 - Perbaikan kecil dan peningkatan kestabilan.

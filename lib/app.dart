@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cbt_app/providers/auth_provider.dart';
 import 'package:cbt_app/providers/connectivity_provider.dart';
 import 'package:cbt_app/style/style.dart';
+import 'package:cbt_app/utils/session_guard.dart';
 import 'package:cbt_app/views/splash_page.dart';
 
 class CbtApp extends StatelessWidget {
@@ -18,6 +19,8 @@ class CbtApp extends StatelessWidget {
       child: MaterialApp(
         title: 'CBT App',
         debugShowCheckedModeBanner: false,
+        navigatorKey: SessionGuard.navigatorKey,
+        scaffoldMessengerKey: SessionGuard.messengerKey,
         theme: ThemeData(
           colorScheme:
               ColorScheme.fromSeed(seedColor: ColorsApp.backgroundColor),
